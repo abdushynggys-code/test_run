@@ -19,7 +19,6 @@ import { EventForm } from '../components/forms/EventForm';
 import { ReminderForm } from '../components/forms/ReminderForm';
 import { TodoForm } from '../components/forms/TodoForm';
 import { EventDetails } from '../components/events/EventDetails';
-import { TaskProgress } from '../components/dashboard/TaskProgress';
 
 type Dialog = 'event' | 'reminder' | 'todo' | null;
 
@@ -87,10 +86,10 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
         {view === 'day' && <DayCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(item) => void dashboard.toggleItem('reminders', item.id, !item.completed)} />}
       </div></div>
     </section>
-    {view !== 'day' && <><div className="bottom-grid"><RemindersPanel items={visibleReminders} members={data.members} onAdd={() => setDialog('reminder')} onToggle={(id, completed) => void dashboard.toggleItem('reminders', id, completed)} /><TodosPanel items={visibleTodos} members={data.members} onAdd={() => setDialog('todo')} onToggle={(id, completed) => void dashboard.toggleItem('todos', id, completed)} /></div><TaskProgress todos={visibleTodos} date={date} /></>}
+    {view !== 'day' && <div className="bottom-grid"><RemindersPanel items={visibleReminders} members={data.members} onAdd={() => setDialog('reminder')} onToggle={(id, completed) => void dashboard.toggleItem('reminders', id, completed)} /><TodosPanel items={visibleTodos} members={data.members} onAdd={() => setDialog('todo')} onToggle={(id, completed) => void dashboard.toggleItem('todos', id, completed)} /></div>}
     {dialog === 'event' && <Modal title={eventRange ? "Add a multi-day event" : "Add an event"} onClose={() => { setDialog(null); setEventRange(null); }}><EventForm members={data.members} initialDate={eventRange?.start ?? date} initialEndDate={eventRange?.end} initialMemberId={calendarOwner} onCancel={() => { setDialog(null); setEventRange(null); }} onSubmit={(value) => { void dashboard.addEvent(value); setDialog(null); setEventRange(null); }} /></Modal>}
     {dialog === 'reminder' && <Modal title="Add a reminder" onClose={() => setDialog(null)}><ReminderForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addReminder(value); setDialog(null); }} /></Modal>}
-    {dialog === 'todo' && <Modal title="Add a family task" onClose={() => setDialog(null)}><TodoForm members={data.members} initialMemberId={calendarOwner} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addTodo(value); setDialog(null); }} /></Modal>}
+    {dialog === 'todo' && <Modal title="Add a family task" onClose={() => setDialog(null)}><TodoForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addTodo(value); setDialog(null); }} /></Modal>}
     {activeEvent && <Modal title="Event details" onClose={() => setActiveEvent(null)}><EventDetails event={activeEvent} members={data.members} onClose={() => setActiveEvent(null)} onDelete={() => { void dashboard.removeItem('events', activeEvent.id); setActiveEvent(null); }} /></Modal>}
   </main>;
 }
