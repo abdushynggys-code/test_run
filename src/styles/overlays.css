@@ -31,3 +31,12 @@
 @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.98); } }
 @keyframes drawer-in { from { transform: translateX(24px); opacity: .7; } }
 @keyframes popover-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
+
+/* Sliding Sign in / Create account control */
+.auth-tabs { position: relative; isolation: isolate; overflow: hidden; }
+.auth-tabs::before { content: ''; position: absolute; z-index: -1; inset: 4px 50% 4px 4px; border-radius: 9px; background: var(--surface); box-shadow: 0 3px 10px rgba(0,0,0,.08); transition: transform 320ms cubic-bezier(.22,1,.36,1); }
+.auth-tabs.mode-signup::before { transform: translateX(100%); }.auth-tabs button, .auth-tabs button.active { position: relative; z-index: 1; background: transparent; box-shadow: none; transition: color 220ms ease; }
+.auth-mode-content { will-change: transform, opacity; }.auth-mode-content.slide-signin { animation: auth-slide-left 320ms cubic-bezier(.22,1,.36,1) both; }.auth-mode-content.slide-signup { animation: auth-slide-right 320ms cubic-bezier(.22,1,.36,1) both; }.auth-mode-content.slide-forgot { animation: auth-slide-up 280ms cubic-bezier(.22,1,.36,1) both; }
+@keyframes auth-slide-left { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+@keyframes auth-slide-right { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@keyframes auth-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }

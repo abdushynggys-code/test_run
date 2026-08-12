@@ -54,17 +54,19 @@ export function AuthPage() {
     <section className="auth-copy"><span className="brand-mark">K</span><p className="eyebrow">KINKEEP FAMILY</p><h1>Every plan. Everyone you love. One calm place.</h1><p>Your family calendar, reminders, and daily tasks stay clear at a glance.</p></section>
     <section className="auth-card">
       <p className="eyebrow">WELCOME HOME</p>
-      {mode !== 'forgot' && <div className="auth-tabs" role="tablist"><button type="button" className={mode === 'signin' ? 'active' : ''} onClick={() => changeMode('signin')}>Sign in</button><button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => changeMode('signup')}>Create account</button></div>}
-      <h2>{mode === 'signin' ? 'Sign in to your family' : mode === 'signup' ? 'Create your family' : 'Reset your password'}</h2>
-      {mode !== 'forgot' && <><GoogleAuthButton onError={setMessage} /><div className="auth-divider"><span>or continue with email</span></div></>}
-      <form onSubmit={submit} className="form-stack">
-        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="parent@example.com" required /></label>
-        {mode !== 'forgot' && <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={6} placeholder="At least 6 characters" required /></label>}
-        <button className="primary-button" disabled={busy || (mode !== 'signin' && cooldown > 0)}>{submitLabel}</button>
-      </form>
-      {message && <p className="form-message">{message}</p>}
-      {mode === 'signup' && <button type="button" className="guest-button" onClick={() => navigate('/demo')}>Continue without an account<span>Open the demo — no email or Google needed</span></button>}
-      <div className="auth-links">{mode === 'forgot' ? <button type="button" className="text-button" onClick={() => changeMode('signin')}>Back to sign in</button> : <span />}{mode === 'signin' && <button type="button" className="text-button" onClick={() => changeMode('forgot')}>Forgot password?</button>}</div>
+      {mode !== 'forgot' && <div className={`auth-tabs mode-${mode}`} role="tablist"><button type="button" className={mode === 'signin' ? 'active' : ''} onClick={() => changeMode('signin')}>Sign in</button><button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => changeMode('signup')}>Create account</button></div>}
+      <div className={`auth-mode-content slide-${mode}`} key={mode}>
+        <h2>{mode === 'signin' ? 'Sign in to your family' : mode === 'signup' ? 'Create your family' : 'Reset your password'}</h2>
+        {mode !== 'forgot' && <><GoogleAuthButton onError={setMessage} /><div className="auth-divider"><span>or continue with email</span></div></>}
+        <form onSubmit={submit} className="form-stack">
+          <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="parent@example.com" required /></label>
+          {mode !== 'forgot' && <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={6} placeholder="At least 6 characters" required /></label>}
+          <button className="primary-button" disabled={busy || (mode !== 'signin' && cooldown > 0)}>{submitLabel}</button>
+        </form>
+        {message && <p className="form-message">{message}</p>}
+        {mode === 'signup' && <button type="button" className="guest-button" onClick={() => navigate('/demo')}>Continue without an account<span>Open the demo — no email or Google needed</span></button>}
+        <div className="auth-links">{mode === 'forgot' ? <button type="button" className="text-button" onClick={() => changeMode('signin')}>Back to sign in</button> : <span />}{mode === 'signin' && <button type="button" className="text-button" onClick={() => changeMode('forgot')}>Forgot password?</button>}</div>
+      </div>
     </section>
   </main>;
 }
