@@ -1,0 +1,10 @@
+{
+  "name": "Kinkeep Family Dashboard",
+  "short_name": "Kinkeep",
+  "description": "A calm command center for your whole family.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f2ed",
+  "theme_color": "#6157e5",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
