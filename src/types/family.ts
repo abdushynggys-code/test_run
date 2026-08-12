@@ -12,6 +12,7 @@ export interface FamilyMember {
   id: string;
   family_id: string;
   name: string;
+  avatar_url: string | null;
   color: string;
   emoji: string;
   member_type: 'adult' | 'child' | 'group';
@@ -78,4 +79,4 @@ export interface DashboardData {
 export type CreateEvent = Omit<CalendarEvent, 'id' | 'family_id'>;
 export type CreateReminder = Omit<Reminder, 'id' | 'family_id' | 'completed'>;
 export type CreateTodo = Omit<Todo, 'id' | 'family_id' | 'completed'>;
-export type CreateMember = Pick<FamilyMember, 'name' | 'color' | 'emoji' | 'member_type'>;
+export type CreateMember = Pick<FamilyMember, 'name' | 'color' | 'emoji' | 'member_type'> & { avatar_url?: string | null };

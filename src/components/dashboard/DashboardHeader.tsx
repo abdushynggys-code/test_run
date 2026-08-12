@@ -21,7 +21,7 @@ export function DashboardHeader({ familyName, members, settings, isDemo, onFamil
       <div className="header-actions">
         {isDemo && <span className="demo-badge">Demo</span>}
         <button className="profile-stack" onClick={onFamily} aria-label="Family profiles">
-          {members.slice(0, 4).map((member) => <span key={member.id} style={{ background: member.color }}>{member.emoji}</span>)}
+          {members.slice(0, 4).map((member) => <span key={member.id} style={{ background: member.color }}>{member.avatar_url ? <img src={member.avatar_url} alt="" /> : member.emoji}</span>)}
         </button>
         <button className="icon-button" onClick={onSettings} aria-label={`${familyName} settings`}>⚙</button>
       </div>

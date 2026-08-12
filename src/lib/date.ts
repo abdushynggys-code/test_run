@@ -29,3 +29,8 @@ export function formatTime(value: string) {
 export function isSameDay(left: Date, right: Date) {
   return toDateKey(left) === toDateKey(right);
 }
+
+export function eventIncludesDay(startValue: string, endValue: string, day: Date) {
+  const key = toDateKey(day);
+  return key >= toDateKey(new Date(startValue)) && key <= toDateKey(new Date(endValue));
+}

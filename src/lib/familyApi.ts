@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import type { CreateEvent, CreateMember, CreateReminder, CreateTodo, DashboardData, Family, FamilySettings } from '../types/family';
+import type { CreateEvent, CreateMember, CreateReminder, CreateTodo, DashboardData, Family, FamilyMember, FamilySettings } from '../types/family';
 
 export async function loadDashboard(session: Session): Promise<DashboardData> {
   const familyResult = await supabase.from('families').select('*').eq('owner_id', session.user.id).single();
@@ -15,7 +15,13 @@ export async function loadDashboard(session: Session): Promise<DashboardData> {
   ]);
   const failure = [members, events, reminders, todos, settings].find((result) => result.error);
   if (failure?.error) throw failure.error;
-  return { family, members: members.data, events: events.data, reminders: reminders.data, todos: todos.data, settings: settings.data } as DashboardData;
+  const memberRows = members.data as FamilyMember[];
+  const membersWithImages = await Promise.all(memberRows.map(async (member) => {
+    if (!member.avatar_url || member.avatar_url.startsWith('http')) return member;
+    const { data } = await supabase.storage.from('family-avatars').createSignedUrl(member.avatar_url, 3_600);
+    return { ...member, avatar_url: data?.signedUrl ?? null };
+  }));
+  return { family, members: membersWithImages, events: events.data, reminders: reminders.data, todos: todos.data, settings: settings.data } as DashboardData;
 }
 
 async function insertRow(table: string, value: Record<string, unknown>) {
@@ -38,6 +44,26 @@ export const familyApi = {
   },
   async deactivateMember(id: string) {
     const { error } = await supabase.from('family_members').update({ active: false }).eq('id', id);
+    if (error) throw error;
+  },
+  async uploadAvatar(userId: string, file: File) {
+    if (file.size > 5 * 1024 * 1024) throw new Error('Profile image must be smaller than 5 MB.');
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+    const { error } = await supabase.storage.from('family-avatars').upload(path, file, { contentType: file.type });
+    if (error) throw error;
+    return path;
+  },
+  async updateMemberAvatar(memberId: string, avatarPath: string) {
+    const { error } = await supabase.from('family_members').update({ avatar_url: avatarPath }).eq('id', memberId);
+    if (error) throw error;
+  },
+  async updateMemberColor(memberId: string, color: string) {
+    const { error } = await supabase.from('family_members').update({ color }).eq('id', memberId);
+    if (error) throw error;
+  },
+  async updateMemberName(memberId: string, name: string) {
+    const { error } = await supabase.from('family_members').update({ name, emoji: name.slice(0, 1).toUpperCase() }).eq('id', memberId);
     if (error) throw error;
   },
   async saveSettings(familyId: string, value: Partial<FamilySettings>) {

@@ -7,11 +7,11 @@ const at = (day: number, time: string) => `${toDateKey(addDays(now, day))}T${tim
 export const demoData: DashboardData = {
   family: { id: 'demo-family', name: 'The Parker Family', owner_id: 'demo-parent' },
   members: [
-    { id: 'mom', family_id: 'demo-family', name: 'Mom', color: '#ef6f91', emoji: 'M', member_type: 'adult', active: true },
-    { id: 'dad', family_id: 'demo-family', name: 'Dad', color: '#4d8ef7', emoji: 'D', member_type: 'adult', active: true },
-    { id: 'emma', family_id: 'demo-family', name: 'Emma', color: '#51ae78', emoji: 'E', member_type: 'child', active: true },
-    { id: 'noah', family_id: 'demo-family', name: 'Noah', color: '#8b6dda', emoji: 'N', member_type: 'child', active: true },
-    { id: 'family', family_id: 'demo-family', name: 'Family', color: '#28a6a0', emoji: 'F', member_type: 'group', active: true },
+    { id: 'mom', family_id: 'demo-family', name: 'Mom', avatar_url: null, color: '#ef6f91', emoji: 'M', member_type: 'adult', active: true },
+    { id: 'dad', family_id: 'demo-family', name: 'Dad', avatar_url: null, color: '#4d8ef7', emoji: 'D', member_type: 'adult', active: true },
+    { id: 'emma', family_id: 'demo-family', name: 'Emma', avatar_url: null, color: '#51ae78', emoji: 'E', member_type: 'child', active: true },
+    { id: 'noah', family_id: 'demo-family', name: 'Noah', avatar_url: null, color: '#8b6dda', emoji: 'N', member_type: 'child', active: true },
+    { id: 'family', family_id: 'demo-family', name: 'Family', avatar_url: null, color: '#28a6a0', emoji: 'F', member_type: 'group', active: true },
   ],
   events: [
     { id: 'e1', family_id: 'demo-family', title: 'School drop-off', description: '', start_time: at(0, '08:00'), end_time: at(0, '08:30'), all_day: false, location: 'Lincoln School', family_member_id: 'emma', color: null, repeat_rule: 'weekly' },
