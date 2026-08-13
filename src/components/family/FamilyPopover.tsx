@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import type { CreateMember, FamilyMember } from '../../types/family';
+import type { CreateMember, FamilyMember, ThemePalette } from '../../types/family';
+import { getProfileColors } from '../../lib/themePalettes';
 
-const colors = ['#ef6f91', '#4d8ef7', '#51ae78', '#8b6dda', '#28a6a0', '#ed8b4f'];
-interface Props { members: FamilyMember[]; onAdd: (value: CreateMember, file?: File) => void; onAvatar: (id: string, file: File) => void; onColor: (id: string, color: string) => void; onName: (id: string, name: string) => void; onRemove: (id: string) => void; onClose: () => void; }
+interface Props { members: FamilyMember[]; palette: ThemePalette; onAdd: (value: CreateMember, file?: File) => void; onAvatar: (id: string, file: File) => void; onColor: (id: string, color: string) => void; onName: (id: string, name: string) => void; onRemove: (id: string) => void; onClose: () => void; }
 
-export function FamilyPopover({ members, onAdd, onAvatar, onColor, onName, onRemove, onClose }: Props) {
+export function FamilyPopover({ members, palette, onAdd, onAvatar, onColor, onName, onRemove, onClose }: Props) {
+  const colors = getProfileColors(palette);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');

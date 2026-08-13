@@ -16,3 +16,16 @@ export function applyThemePalette(palette: ThemePalette) {
 export function getThemePalette(palette?: ThemePalette): ThemePalette {
   return palette && Object.values(palette).every((color) => /^#[0-9a-f]{6}$/i.test(color)) ? palette : DEFAULT_PALETTE;
 }
+
+export function getProfileColors(palette?: ThemePalette): string[] {
+  const colors = getThemePalette(palette);
+  return [
+    colors.primary, colors.deep, colors.warm, colors.dark,
+    mixHex(colors.primary, colors.deep), mixHex(colors.primary, colors.warm),
+  ];
+}
+
+function mixHex(first: string, second: string): string {
+  const channels = [1, 3, 5].map((index) => Math.round((parseInt(first.slice(index, index + 2), 16) + parseInt(second.slice(index, index + 2), 16)) / 2));
+  return `#${channels.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+}
