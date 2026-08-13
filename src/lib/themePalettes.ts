@@ -6,9 +6,9 @@ export const DEFAULT_PALETTE: ThemePalette = {
 
 export const PALETTE_PRESETS: { name: string; colors: ThemePalette }[] = [
   { name: 'Olive Grove', colors: DEFAULT_PALETTE },
-  { name: 'Sage Linen', colors: { primary: '#7A8450', dark: '#34422A', light: '#F3EFD9', warm: '#C9A66B', deep: '#9B6545' } },
-  { name: 'Cozy Clay', colors: { primary: '#7B6846', dark: '#3C3025', light: '#F2E7D5', warm: '#C98F65', deep: '#9D553A' } },
-  { name: 'Forest Moss', colors: { primary: '#4F633D', dark: '#1F3326', light: '#E8E6CF', warm: '#B99461', deep: '#8B5E34' } },
+  { name: 'Tropical Sunrise', colors: { primary: '#FF9F1C', dark: '#2EC4B6', light: '#FFFFFF', warm: '#FFBF69', deep: '#CBF3F0' } },
+  { name: 'Cool Snow', colors: { primary: '#09BC8A', dark: '#172A3A', light: '#74B3CE', warm: '#508991', deep: '#004346' } },
+  { name: 'Vibrant Spring', colors: { primary: '#086375', dark: '#3C1642', light: '#B2FF9E', warm: '#AFFC41', deep: '#1DD3B0' } },
 ];
 
 export function applyThemePalette(palette: ThemePalette) {
