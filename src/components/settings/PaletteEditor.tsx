@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { DEFAULT_PALETTE, PALETTE_PRESETS, getThemePalette } from '../../lib/themePalettes';
-import type { ThemePalette } from '../../types/family';
+import type { SavedPalette, ThemePalette } from '../../types/family';
 
 const roles: { key: keyof ThemePalette; label: string }[] = [
   { key: 'primary', label: 'Main' }, { key: 'dark', label: 'Text / dark' },
@@ -10,18 +11,37 @@ const roles: { key: keyof ThemePalette; label: string }[] = [
 const samePalette = (first: ThemePalette, second: ThemePalette) =>
   roles.every(({ key }) => first[key].toLowerCase() === second[key].toLowerCase());
 
-export function PaletteEditor({ value, onChange }: { value?: ThemePalette; onChange: (palette: ThemePalette) => void }) {
+interface Props {
+  value?: ThemePalette;
+  saved: SavedPalette[];
+  onChange: (palette: ThemePalette) => void;
+  onSavedChange: (palettes: SavedPalette[]) => void;
+}
+
+export function PaletteEditor({ value, saved, onChange, onSavedChange }: Props) {
+  const [name, setName] = useState('');
   const palette = getThemePalette(value ?? DEFAULT_PALETTE);
+  const saveCurrent = () => {
+    const next = { id: crypto.randomUUID(), name: name.trim() || `My palette ${saved.length + 1}`, colors: palette };
+    onSavedChange([...saved, next]); setName('');
+  };
   return <div className="palette-editor">
-    <p>Preset palettes</p>
+    <p>Olive Grove</p>
     <div className="palette-presets">
-      {PALETTE_PRESETS.map((preset) => <button type="button" className={samePalette(palette, preset.colors) ? 'active' : ''} key={preset.name} onClick={() => onChange(preset.colors)} aria-label={`Use ${preset.name} palette`}>
-        <span>{roles.map(({ key }) => <i key={key} style={{ background: preset.colors[key] }} />)}</span><small>{preset.name}</small>
-      </button>)}
+      {PALETTE_PRESETS.map((preset) => <PaletteChoice key={preset.name} name={preset.name} colors={preset.colors} active={samePalette(palette, preset.colors)} onChoose={() => onChange(preset.colors)} />)}
+      {saved.map((preset) => <PaletteChoice key={preset.id} name={preset.name} colors={preset.colors} active={samePalette(palette, preset.colors)} onChoose={() => onChange(preset.colors)} onRemove={() => onSavedChange(saved.filter((item) => item.id !== preset.id))} />)}
     </div>
-    <p>Choose your five colors</p>
+    <p>Make your own with five colors</p>
     <div className="palette-colors">
       {roles.map(({ key, label }) => <label key={key}>{label}<span><input type="color" value={palette[key]} onChange={(event) => onChange({ ...palette, [key]: event.target.value })} /><code>{palette[key].toUpperCase()}</code></span></label>)}
     </div>
+    <div className="save-palette"><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Palette name" maxLength={30} /><button type="button" className="primary-button" onClick={saveCurrent}>Save palette</button></div>
+  </div>;
+}
+
+function PaletteChoice({ name, colors, active, onChoose, onRemove }: { name: string; colors: ThemePalette; active: boolean; onChoose: () => void; onRemove?: () => void }) {
+  return <div className={`palette-choice ${active ? 'active' : ''}`}>
+    <button type="button" onClick={onChoose} aria-label={`Use ${name} palette`}><span>{roles.map(({ key }) => <i key={key} style={{ background: colors[key] }} />)}</span><small>{name}</small></button>
+    {onRemove && <button type="button" className="remove-palette" onClick={onRemove} aria-label={`Remove ${name}`}>×</button>}
   </div>;
 }

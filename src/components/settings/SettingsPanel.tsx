@@ -18,7 +18,7 @@ export function SettingsPanel({ settings, isDemo, onSave, onClose }: Props) {
     <section>
       <h3>Appearance</h3>
       <label>Display mode<select value={settings.mode} onChange={(event) => onSave({ mode: event.target.value as ThemeMode })}><option value="light">Light</option><option value="dark">Dark</option><option value="auto">Auto</option></select></label>
-      <PaletteEditor value={settings.palette} onChange={(palette) => onSave({ palette, accent_color: palette.primary })} />
+      <PaletteEditor value={settings.palette} saved={settings.saved_palettes ?? []} onChange={(palette) => onSave({ palette, accent_color: palette.primary })} onSavedChange={(saved_palettes) => onSave({ saved_palettes })} />
     </section>
     <section>
       <h3>Calendar</h3>

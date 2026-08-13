@@ -10,6 +10,12 @@ export interface ThemePalette {
   deep: string;
 }
 
+export interface SavedPalette {
+  id: string;
+  name: string;
+  colors: ThemePalette;
+}
+
 export interface Family {
   id: string;
   name: string;
@@ -70,6 +76,7 @@ export interface FamilySettings {
   mode: ThemeMode;
   accent_color: string;
   palette: ThemePalette;
+  saved_palettes: SavedPalette[];
   default_view: CalendarView;
   first_day_of_week: 0 | 1;
   temperature_unit: 'c' | 'f';
