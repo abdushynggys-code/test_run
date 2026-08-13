@@ -19,7 +19,7 @@
 .segmented { border-color: color-mix(in srgb, var(--line), transparent 15%); background: color-mix(in srgb, var(--surface-2), transparent 18%); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 4px 14px rgba(30,30,45,.06); backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35); }
 .segmented::before { z-index: 0; border: 1px solid rgba(255,255,255,.65); background: linear-gradient(145deg, color-mix(in srgb, var(--surface), transparent 4%), color-mix(in srgb, var(--surface), var(--accent) 5%)); box-shadow: 0 5px 14px rgba(30,30,45,.13), inset 0 1px 0 rgba(255,255,255,.85); transition: transform 420ms cubic-bezier(.34,1.45,.55,1); }
 .segmented button.active { color: var(--accent); text-shadow: 0 1px 0 rgba(255,255,255,.4); }.segmented button:active { transform: scale(.93); }
-.calendar-viewport { overflow: hidden; }.calendar-content { will-change: transform, opacity; }.calendar-content.motion-forward { animation: calendar-enter-forward 380ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-backward { animation: calendar-enter-backward 380ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-fade { animation: calendar-enter-fade 260ms ease both; }
+.calendar-viewport { overflow: hidden; isolation: isolate; background: var(--surface); }.calendar-content { min-height: 100%; background: var(--surface); will-change: transform, opacity; }.calendar-content.motion-forward { animation: calendar-enter-forward 380ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-backward { animation: calendar-enter-backward 380ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-fade { animation: calendar-enter-fade 260ms ease both; }
 @keyframes calendar-enter-forward { from { opacity: .15; transform: translateX(46px) scale(.992); filter: blur(2px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes calendar-enter-backward { from { opacity: .15; transform: translateX(-46px) scale(.992); filter: blur(2px); } to { opacity: 1; transform: none; filter: blur(0); } }
 @keyframes calendar-enter-fade { from { opacity: .2; transform: scale(.995); } to { opacity: 1; transform: none; } }
@@ -28,8 +28,9 @@
 @supports (view-transition-name: calendar) {
   .calendar-viewport { view-transition-name: calendar; contain: layout; }
   .calendar-content.motion-forward, .calendar-content.motion-backward, .calendar-content.motion-fade { animation: none; }
-  ::view-transition-group(calendar) { overflow: hidden; animation-duration: 440ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
-  ::view-transition-old(calendar), ::view-transition-new(calendar) { width: 100%; height: 100%; mix-blend-mode: normal; animation-duration: 440ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+  ::view-transition-group(calendar) { overflow: hidden; isolation: isolate; background: var(--surface); animation-duration: 440ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+  ::view-transition-image-pair(calendar) { isolation: isolate; background: var(--surface); }
+  ::view-transition-old(calendar), ::view-transition-new(calendar) { width: 100%; height: 100%; opacity: 1; mix-blend-mode: normal; background: var(--surface); animation-duration: 440ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
   [data-calendar-motion='forward']::view-transition-old(calendar) { animation-name: calendar-old-forward; }
   [data-calendar-motion='forward']::view-transition-new(calendar) { animation-name: calendar-new-forward; }
   [data-calendar-motion='backward']::view-transition-old(calendar) { animation-name: calendar-old-backward; }
@@ -37,10 +38,10 @@
   [data-calendar-motion='fade']::view-transition-old(calendar) { animation-name: calendar-old-fade; }
   [data-calendar-motion='fade']::view-transition-new(calendar) { animation-name: calendar-new-fade; }
 }
-@keyframes calendar-old-forward { to { opacity: .25; transform: translateX(-34%); filter: blur(2px); } }
-@keyframes calendar-new-forward { from { opacity: .35; transform: translateX(100%); filter: blur(2px); } }
-@keyframes calendar-old-backward { to { opacity: .25; transform: translateX(34%); filter: blur(2px); } }
-@keyframes calendar-new-backward { from { opacity: .35; transform: translateX(-100%); filter: blur(2px); } }
-@keyframes calendar-old-fade { to { opacity: 0; transform: scale(.985); } }
-@keyframes calendar-new-fade { from { opacity: 0; transform: scale(1.01); } }
+@keyframes calendar-old-forward { to { transform: translateX(-100%); } }
+@keyframes calendar-new-forward { from { transform: translateX(100%); } }
+@keyframes calendar-old-backward { to { transform: translateX(100%); } }
+@keyframes calendar-new-backward { from { transform: translateX(-100%); } }
+@keyframes calendar-old-fade { to { opacity: 0; } }
+@keyframes calendar-new-fade { from { opacity: 0; } }
 .compact-list { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; margin-top: 8px; }.compact-item { display: grid; grid-template-columns: 22px 1fr 7px; align-items: center; gap: 7px; min-width: 0; border: 0; padding: 5px 2px; background: transparent; text-align: left; }.compact-item strong, .compact-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.compact-item strong { font-size: 12px; }.compact-item small { margin-top: 1px; color: var(--muted); font-size: 10px; }.round-check, .square-check { display: grid; place-items: center; width: 19px; height: 19px; border: 1.5px solid var(--line); color: #fff; font-size: 11px; }.round-check { border-radius: 50%; }.square-check { border-radius: 5px; }.completed { opacity: .52; }.completed strong { text-decoration: line-through; }.completed .round-check, .completed .square-check { border-color: #7aa888; background: #7aa888; animation: check-in 180ms ease; }.priority { width: 6px; height: 6px; border-radius: 50%; }.priority.low { background: #51ae78; }.priority.medium { background: #e8bc48; }.priority.high { background: #ed8b4f; }.priority.urgent { background: #e35d5d; }.empty-message { grid-column: 1 / -1; margin: 7px 0; color: var(--muted); font-size: 12px; } @keyframes check-in { from { transform: scale(.2); } }
