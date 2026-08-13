@@ -2,6 +2,14 @@ export type CalendarView = 'month' | 'week' | 'day';
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
+export interface ThemePalette {
+  primary: string;
+  dark: string;
+  light: string;
+  warm: string;
+  deep: string;
+}
+
 export interface Family {
   id: string;
   name: string;
@@ -61,6 +69,7 @@ export interface FamilySettings {
   family_id: string;
   mode: ThemeMode;
   accent_color: string;
+  palette: ThemePalette;
   default_view: CalendarView;
   first_day_of_week: 0 | 1;
   temperature_unit: 'c' | 'f';

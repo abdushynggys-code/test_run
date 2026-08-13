@@ -19,6 +19,7 @@ import { EventForm } from '../components/forms/EventForm';
 import { ReminderForm } from '../components/forms/ReminderForm';
 import { TodoForm } from '../components/forms/TodoForm';
 import { EventDetails } from '../components/events/EventDetails';
+import { applyThemePalette, getThemePalette } from '../lib/themePalettes';
 
 type Dialog = 'event' | 'reminder' | 'todo' | null;
 
@@ -44,7 +45,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   useEffect(() => { if (data) { setView(data.settings.default_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
   useEffect(() => {
     if (!data) return;
-    document.documentElement.style.setProperty('--accent', data.settings.accent_color);
+    applyThemePalette(getThemePalette(data.settings.palette));
     document.documentElement.dataset.theme = data.settings.mode;
   }, [data?.settings]);
 
