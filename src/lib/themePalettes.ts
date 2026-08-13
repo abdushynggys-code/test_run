@@ -1,7 +1,7 @@
 import type { ThemePalette } from '../types/family';
 
 export const DEFAULT_PALETTE: ThemePalette = {
-  primary: '#8A704E', dark: '#4E3B2C', light: '#FFF4DE', warm: '#D8B98A', deep: '#76563C',
+  primary: '#606C38', dark: '#283618', light: '#FEFAE0', warm: '#DDA15E', deep: '#BC6C25',
 };
 
 export const PALETTE_PRESETS: { name: string; colors: ThemePalette }[] = [
