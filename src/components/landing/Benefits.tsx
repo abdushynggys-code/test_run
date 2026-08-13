@@ -12,5 +12,5 @@ const benefits = [
 ];
 
 export function Benefits() {
-  return <section className="landing-benefits" id="benefits"><Reveal><p className="eyebrow">WHY FAMILIES USE KINKEEP</p><h2>Less asking. Less forgetting.<br />More time together.</h2></Reveal><div>{benefits.map((item, index) => <Reveal key={item.title} delay={(index % 4) * 70}><article><span>{item.icon}</span><h3>{item.title}</h3><p>{item.text}</p></article></Reveal>)}</div></section>;
+  return <section className="landing-benefits" id="benefits"><Reveal className="benefits-heading"><p className="eyebrow">WHY FAMILIES USE KINKEEP</p><h2>Less asking. Less forgetting.<br />More time together.</h2></Reveal><div>{benefits.map((item, index) => <Reveal className="benefit-reveal" direction="left" key={item.title} delay={(index % 4) * 135}><article><span>{item.icon}</span><h3>{item.title}</h3><p>{item.text}</p></article></Reveal>)}</div></section>;
 }

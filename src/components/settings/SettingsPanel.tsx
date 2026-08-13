@@ -1,7 +1,7 @@
 import type { CalendarView, FamilySettings, ThemeMode } from '../../types/family';
 import { supabase } from '../../lib/supabase';
 
-const accents = ['#6157e5', '#4d8ef7', '#8b6dda', '#ef6f91', '#51ae78', '#ed8b4f', '#e35d5d'];
+const accents = ['#a86446', '#788268', '#b2875f', '#66766a', '#9a6f62', '#bd9257', '#865a47'];
 
 export function SettingsPanel({ settings, isDemo, onSave, onClose }: { settings: FamilySettings; isDemo: boolean; onSave: (value: Partial<FamilySettings>) => void; onClose: () => void }) {
   return <aside className="settings-panel">

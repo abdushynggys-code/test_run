@@ -11,7 +11,7 @@ export function Reveal({ children, className = '', delay = 0, direction = 'up' }
     if (!node) return;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) { setVisible(true); observer.unobserve(node); }
-    }, { threshold: 0.14, rootMargin: '0px 0px -45px' });
+    }, { threshold: 0.22, rootMargin: '0px 0px -12% 0px' });
     observer.observe(node);
     return () => observer.disconnect();
   }, []);

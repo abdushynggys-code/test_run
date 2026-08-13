@@ -29,5 +29,5 @@ export const demoData: DashboardData = {
     { id: 't2', family_id: 'demo-family', title: 'Pick up Emma', description: '', family_member_id: 'dad', due_date: toDateKey(now), priority: 'medium', completed: false },
     { id: 't3', family_id: 'demo-family', title: 'Pay electricity', description: '', family_member_id: 'family', due_date: toDateKey(now), priority: 'low', completed: true },
   ],
-  settings: { id: 'demo-settings', family_id: 'demo-family', mode: 'light', accent_color: '#6157e5', default_view: 'month', first_day_of_week: 1, temperature_unit: 'c', weather_location: 'Almaty' },
+  settings: { id: 'demo-settings', family_id: 'demo-family', mode: 'light', accent_color: '#a86446', default_view: 'month', first_day_of_week: 1, temperature_unit: 'c', weather_location: 'Almaty' },
 };
