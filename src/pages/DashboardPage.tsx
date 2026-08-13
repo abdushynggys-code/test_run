@@ -79,8 +79,8 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
     <section className="calendar-card">
       <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={() => { setEventRange(null); setDialog('event'); }} />
+      {!calendarOwner && <div className="fixed-member-filters"><MemberFilters members={data.members} selected={selected} onChange={setSelected} /></div>}
       <div className="calendar-viewport"><div className={`calendar-content motion-${motion}`} key={`${calendarOwner ?? 'family'}-${view}-${motionKey}`}>
-        {!calendarOwner && <MemberFilters members={data.members} selected={selected} onChange={setSelected} />}
         {view === 'month' && <MonthCalendar date={date} events={visibleEvents} todos={visibleTodos} members={data.members} firstDay={data.settings.first_day_of_week} onDay={openDay} onRange={openRange} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} />}
         {view === 'week' && <WeekCalendar date={date} events={visibleEvents} todos={visibleTodos} members={data.members} firstDay={data.settings.first_day_of_week} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} />}
         {view === 'day' && <DayCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(item) => void dashboard.toggleItem('reminders', item.id, !item.completed)} />}
