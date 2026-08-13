@@ -10,12 +10,13 @@ export function FamilyPopover({ members, onAdd, onAvatar, onColor, onName, onRem
   const [name, setName] = useState('');
   const [color, setColor] = useState(colors[0]);
   const [photo, setPhoto] = useState<File>();
+  const [memberType, setMemberType] = useState<FamilyMember['member_type']>('child');
 
   return <div className="popover family-popover">
     <header><div><p className="eyebrow">PROFILES</p><h3>Family</h3></div><button className="icon-button" onClick={onClose}>×</button></header>
     <div className="family-scroll"><div className="family-list">{members.map((member) => <div className="profile-row" key={member.id}>
       <span className="profile-avatar" style={{ background: member.color }}>{member.avatar_url ? <img src={member.avatar_url} alt={`${member.name} profile`} /> : member.emoji}</span>
-      <strong>{member.name}<small>{member.member_type}</small></strong>
+      <strong>{member.name}<small>{member.member_type === 'adult' ? 'parent' : member.member_type}</small></strong>
       <button className="change-profile" onClick={() => setEditingId(editingId === member.id ? null : member.id)}>Change</button>
       {editingId === member.id && <div className="profile-editor">
         <label>Profile name<input defaultValue={member.name} onBlur={(event) => { const nextName = event.target.value.trim(); if (nextName && nextName !== member.name) onName(member.id, nextName); }} /></label>
@@ -24,8 +25,13 @@ export function FamilyPopover({ members, onAdd, onAvatar, onColor, onName, onRem
         <button className="remove-profile-text" onClick={() => onRemove(member.id)}>Remove profile</button>
       </div>}
     </div>)}</div></div>
-    {adding ? <form className="mini-form" onSubmit={(event) => { event.preventDefault(); onAdd({ name, color, emoji: name.slice(0, 1).toUpperCase(), member_type: 'child' }, photo); setAdding(false); }}>
+    {adding ? <form className="mini-form" onSubmit={(event) => { event.preventDefault(); onAdd({ name, color, emoji: name.slice(0, 1).toUpperCase(), member_type: memberType }, photo); setName(''); setPhoto(undefined); setMemberType('child'); setAdding(false); }}>
       <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Profile name" autoFocus required />
+      <fieldset className="profile-type-picker"><legend>Profile type</legend><div>
+        <button type="button" className={memberType === 'adult' ? 'active' : ''} onClick={() => setMemberType('adult')}>Parent</button>
+        <button type="button" className={memberType === 'child' ? 'active' : ''} onClick={() => setMemberType('child')}>Child</button>
+        <button type="button" className={memberType === 'group' ? 'active' : ''} onClick={() => setMemberType('group')}>Group</button>
+      </div></fieldset>
       <label className="add-photo-button">📷 Add photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setPhoto(event.target.files?.[0])} /></label>
       <div className="edit-colors">{colors.map((item) => <button type="button" className={color === item ? 'active' : ''} style={{ background: item }} key={item} onClick={() => setColor(item)} aria-label={`Use ${item}`} />)}<label className="color-wheel"><input type="color" value={color} onChange={(event) => setColor(event.target.value)} /><span>＋</span></label></div>
       <button className="primary-button">Add profile</button>
