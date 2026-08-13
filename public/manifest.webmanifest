@@ -4,7 +4,7 @@
   "description": "A calm command center for your whole family.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f4efe6",
-  "theme_color": "#b9785c",
+  "background_color": "#e7dfd1",
+  "theme_color": "#78866b",
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }
