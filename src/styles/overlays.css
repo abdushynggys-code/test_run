@@ -40,3 +40,6 @@
 @keyframes auth-slide-left { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
 @keyframes auth-slide-right { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
 @keyframes auth-slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Login and registration pages share the same calm 1.5 second motion. */
+.auth-copy, .auth-copy > *, .auth-card, .auth-card > *, .auth-mode-content.slide-signin, .auth-mode-content.slide-signup, .auth-mode-content.slide-forgot { animation-duration: 1.5s; }
