@@ -19,18 +19,20 @@
 .segmented { border-color: color-mix(in srgb, var(--line), transparent 15%); background: color-mix(in srgb, var(--surface-2), transparent 18%); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 4px 14px rgba(30,30,45,.06); backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35); }
 .segmented::before { z-index: 0; border: 1px solid rgba(255,255,255,.65); background: linear-gradient(145deg, color-mix(in srgb, var(--surface), transparent 4%), color-mix(in srgb, var(--surface), var(--accent) 5%)); box-shadow: 0 5px 14px rgba(30,30,45,.13), inset 0 1px 0 rgba(255,255,255,.85); transition: transform 420ms cubic-bezier(.34,1.45,.55,1); }
 .segmented button.active { color: var(--accent); text-shadow: 0 1px 0 rgba(255,255,255,.4); }.segmented button:active { transform: scale(.93); }
-.calendar-viewport { overflow: hidden; isolation: isolate; background: var(--surface); }.calendar-content { min-height: 100%; background: var(--surface); will-change: transform, opacity; }.calendar-content.motion-forward { animation: calendar-enter-forward 380ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-backward { animation: calendar-enter-backward 380ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-fade { animation: calendar-enter-fade 260ms ease both; }
-@keyframes calendar-enter-forward { from { opacity: .15; transform: translateX(46px) scale(.992); filter: blur(2px); } to { opacity: 1; transform: none; filter: blur(0); } }
-@keyframes calendar-enter-backward { from { opacity: .15; transform: translateX(-46px) scale(.992); filter: blur(2px); } to { opacity: 1; transform: none; filter: blur(0); } }
+.calendar-viewport { overflow: hidden; isolation: isolate; background: var(--surface); }.calendar-content { min-height: 100%; background: var(--surface); will-change: transform; }.calendar-content.motion-forward { animation: calendar-enter-forward 300ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-backward { animation: calendar-enter-backward 300ms cubic-bezier(.22,1,.36,1) both; }.calendar-content.motion-fade { animation: calendar-enter-fade 200ms ease both; }
+@keyframes calendar-enter-forward { from { transform: translateX(38px); } to { transform: none; } }
+@keyframes calendar-enter-backward { from { transform: translateX(-38px); } to { transform: none; } }
 @keyframes calendar-enter-fade { from { opacity: .2; transform: scale(.995); } to { opacity: 1; transform: none; } }
 
 /* True two-frame calendar slide: old page exits while the new page enters. */
 @supports (view-transition-name: calendar) {
   .calendar-viewport { view-transition-name: calendar; contain: layout; }
   .calendar-content.motion-forward, .calendar-content.motion-backward, .calendar-content.motion-fade { animation: none; }
-  ::view-transition-group(calendar) { overflow: hidden; isolation: isolate; background: var(--surface); animation-duration: 440ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; opacity: 1; }
+  ::view-transition-group(root) { animation: none !important; }
+  ::view-transition-group(calendar) { overflow: hidden; isolation: isolate; background: var(--surface); animation-duration: 300ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
   ::view-transition-image-pair(calendar) { isolation: isolate; background: var(--surface); }
-  ::view-transition-old(calendar), ::view-transition-new(calendar) { width: 100%; height: 100%; opacity: 1; mix-blend-mode: normal; background: var(--surface); animation-duration: 440ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
+  ::view-transition-old(calendar), ::view-transition-new(calendar) { width: 100%; height: 100%; opacity: 1; mix-blend-mode: normal; background: var(--surface); animation-duration: 300ms; animation-timing-function: cubic-bezier(.22,1,.36,1); }
   [data-calendar-motion='forward']::view-transition-old(calendar) { animation-name: calendar-old-forward; }
   [data-calendar-motion='forward']::view-transition-new(calendar) { animation-name: calendar-new-forward; }
   [data-calendar-motion='backward']::view-transition-old(calendar) { animation-name: calendar-old-backward; }
