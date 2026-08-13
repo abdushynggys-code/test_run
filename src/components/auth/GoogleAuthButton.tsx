@@ -5,7 +5,7 @@ export function GoogleAuthButton({ onError }: { onError: (message: string) => vo
     onError('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     });
     if (error) onError(error.message);
   }

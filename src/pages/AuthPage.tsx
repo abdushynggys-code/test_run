@@ -9,7 +9,8 @@ type Mode = 'signin' | 'signup' | 'forgot';
 export function AuthPage() {
   const { session } = useSession();
   const [, navigate] = useLocation();
-  const [mode, setMode] = useState<Mode>('signin');
+  const initialMode = new URLSearchParams(window.location.search).get('mode') === 'signup' ? 'signup' : 'signin';
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -22,7 +23,7 @@ export function AuthPage() {
     return () => window.clearInterval(timer);
   }, [cooldown > 0]);
 
-  if (session) return <Redirect to="/" />;
+  if (session) return <Redirect to="/dashboard" />;
 
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
@@ -31,7 +32,7 @@ export function AuthPage() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setMessage('');
-    const redirectTo = `${window.location.origin}/`;
+    const redirectTo = `${window.location.origin}/dashboard`;
     const result = mode === 'signup'
       ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } })
       : mode === 'forgot'
