@@ -1,0 +1,36 @@
+.week-board-scroll { overflow-x: auto; border-top: 1px solid var(--line); background: #f7f8fa; }
+.week-board { display: grid; grid-template-columns: repeat(7, minmax(168px, 1fr)); min-width: 1176px; min-height: min(680px, calc(100dvh - 250px)); }
+.week-day { display: grid; grid-template-rows: auto minmax(300px, 1fr) auto; min-width: 0; border-right: 1px solid #d9e0e6; background: #fff; }
+.week-day:last-child { border-right: 0; }
+.week-day:nth-child(6),
+.week-day:nth-child(7) { background: #faf9f7; }
+.week-day > header { display: flex; align-items: center; justify-content: space-between; min-height: 76px; padding: 9px 11px; border-bottom: 1px solid var(--line); }
+.week-day > header > div { display: flex; align-items: center; gap: 7px; }
+.week-day > header > div small { color: var(--muted); font-size: 10px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.week-day > header > div strong { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-size: 18px; }
+.week-day.today > header > div small { color: var(--accent); }
+.week-day.today > header > div strong { color: #fff; background: var(--accent); box-shadow: 0 4px 12px rgba(243,119,72,.28); }
+.week-weather { display: grid; justify-items: center; gap: 1px; }
+.week-weather b { font-size: 19px; line-height: 1; }
+.week-weather small { color: var(--muted); font-size: 8px; white-space: nowrap; }
+.week-day-list { display: flex; flex-direction: column; gap: 7px; max-height: min(590px, calc(100dvh - 335px)); overflow-y: auto; padding: 9px 7px; scrollbar-width: thin; scrollbar-color: #c9d2da transparent; }
+.week-event-card { position: relative; flex: none; width: 100%; min-height: 78px; overflow: hidden; border: 0; border-left: 6px solid var(--event-color); border-radius: 11px; padding: 9px 9px 9px 11px; color: var(--ink); background: color-mix(in srgb, var(--event-color), #fff 87%); box-shadow: 0 2px 7px rgba(35,50,71,.08); text-align: left; }
+.week-event-card.reminder { min-height: 70px; border-left-style: dashed; background: #fff; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--event-color), transparent 65%); }
+.week-event-card strong,
+.week-event-card small,
+.week-card-time { display: block; overflow: hidden; text-overflow: ellipsis; }
+.week-card-time { color: color-mix(in srgb, var(--event-color), #27364b 35%); font-size: 9px; font-weight: 850; white-space: nowrap; }
+.week-event-card strong { margin-top: 5px; font-size: 12px; line-height: 1.25; overflow-wrap: break-word; }
+.week-event-card small { margin-top: 5px; color: var(--muted); font-size: 9px; white-space: nowrap; }
+.week-task-card { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 7px; align-items: center; flex: none; width: 100%; min-height: 48px; border: 1px dashed #cfd8df; border-radius: 10px; padding: 8px; background: #fff; text-align: left; }
+.week-task-card > span { grid-row: span 2; color: #6e7c8f; font-size: 17px; }
+.week-task-card strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.week-task-card small { font-size: 8px; font-weight: 750; }
+.week-task-card.completed { opacity: .5; }
+.week-empty { margin: auto; padding: 25px 4px; color: #a1aab6; font-size: 10px; text-align: center; }
+.week-add-event { min-height: 42px; border: 0; border-top: 1px solid var(--line); color: var(--accent); background: transparent; font-size: 10px; font-weight: 850; }
+
+@media (max-width: 680px) {
+  .week-board { grid-template-columns: repeat(7, 154px); min-width: 1078px; }
+  .week-day-list { max-height: calc(100dvh - 380px); }
+}

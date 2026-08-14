@@ -1,43 +1,71 @@
+import type { CSSProperties } from 'react';
 import type { CalendarEvent, FamilyMember, Reminder, Todo } from '../../types/family';
+import type { WeatherDay } from '../../lib/weather';
 import { addDays, eventIncludesDay, formatTime, isSameDay, startOfWeek, toDateKey } from '../../lib/date';
-import { EventPill } from './EventPill';
-import { TodoPill } from './TodoPill';
 
-const HOUR_HEIGHT = 56;
-const DAY_HEIGHT = HOUR_HEIGHT * 24;
-const minutes = (value: string) => { const time = new Date(value); return time.getHours() * 60 + time.getMinutes(); };
-type TimedEntry = { kind: 'event'; event: CalendarEvent; start: number; end: number } | { kind: 'reminder'; reminder: Reminder; start: number; end: number };
-interface PositionedEntry { entry: TimedEntry; column: number; columns: number; }
-
-function positionEntries(entries: TimedEntry[]): PositionedEntry[] {
-  const positioned: PositionedEntry[] = [];
-  [...entries].sort((left, right) => left.start - right.start).forEach((entry) => {
-    const overlaps = positioned.filter((item) => entry.start < item.entry.end && entry.end > item.entry.start);
-    const used = new Set(overlaps.map((item) => item.column)); let column = 0;
-    while (used.has(column)) column += 1;
-    const columns = Math.max(column + 1, ...overlaps.map((item) => item.columns), 1);
-    overlaps.forEach((item) => { item.columns = columns; }); positioned.push({ entry, column, columns });
-  });
-  return positioned;
+interface Props {
+  date: Date;
+  events: CalendarEvent[];
+  todos: Todo[];
+  reminders: Reminder[];
+  members: FamilyMember[];
+  weather: WeatherDay[];
+  firstDay: 0 | 1;
+  onEvent: (event: CalendarEvent) => void;
+  onTodo: (todo: Todo) => void;
+  onReminder: (reminder: Reminder) => void;
+  onAddEvent: (day: Date) => void;
 }
 
-interface Props { date: Date; events: CalendarEvent[]; todos: Todo[]; reminders: Reminder[]; members: FamilyMember[]; firstDay: 0 | 1; onEvent: (event: CalendarEvent) => void; onTodo: (todo: Todo) => void; onReminder: (reminder: Reminder) => void; }
+const eventLabel = (event: CalendarEvent) => event.all_day
+  ? 'All day'
+  : `${formatTime(event.start_time)} – ${formatTime(event.end_time)}`;
 
-export function WeekCalendar({ date, events, todos, reminders, members, firstDay, onEvent, onTodo, onReminder }: Props) {
-  const start = startOfWeek(date, firstDay); const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
-  return <div className="week-timeline-scroll"><div className="week-timeline">
-    <div className="week-timeline-header"><span />{days.map((day) => <header className={isSameDay(day, new Date()) ? 'today' : ''} key={day.toISOString()}><small>{new Intl.DateTimeFormat('en', { weekday: 'short' }).format(day)}</small><strong>{day.getDate()}</strong></header>)}</div>
-    <div className="week-all-day"><span>ALL DAY</span>{days.map((day) => <div key={day.toISOString()}>{events.filter((event) => eventIncludesDay(event.start_time, event.end_time, day) && (event.all_day || !isSameDay(new Date(event.start_time), new Date(event.end_time)))).map((event) => <EventPill key={event.id} event={event} member={members.find((member) => member.id === event.family_member_id)} onClick={() => onEvent(event)} />)}{todos.filter((todo) => todo.due_date === toDateKey(day)).map((todo) => <TodoPill key={todo.id} todo={todo} member={members.find((member) => member.id === todo.family_member_id)} onToggle={() => onTodo(todo)} />)}</div>)}</div>
-    <div className="week-time-body"><div className="week-time-labels">{Array.from({ length: 24 }, (_, hour) => <time key={hour}>{hour === 0 ? '12 AM' : new Intl.DateTimeFormat('en', { hour: 'numeric' }).format(new Date(2020, 0, 1, hour))}</time>)}</div>
-      {days.map((day) => {
-        const timedEvents: TimedEntry[] = events.filter((event) => eventIncludesDay(event.start_time, event.end_time, day) && !event.all_day && isSameDay(new Date(event.start_time), new Date(event.end_time))).map((event) => ({ kind: 'event', event, start: minutes(event.start_time), end: minutes(event.end_time) }));
-        const timedReminders: TimedEntry[] = reminders.filter((reminder) => isSameDay(new Date(reminder.reminder_time), day)).map((reminder) => ({ kind: 'reminder', reminder, start: minutes(reminder.reminder_time), end: minutes(reminder.reminder_time) + 30 }));
-        return <div className={`week-time-column ${isSameDay(day, new Date()) ? 'today' : ''}`} key={day.toISOString()}>{positionEntries([...timedEvents, ...timedReminders]).map(({ entry, column, columns }) => {
-          const top = entry.start / 60 * HOUR_HEIGHT; const height = Math.min(DAY_HEIGHT - top, Math.max(entry.kind === 'event' ? 44 : 38, (entry.end - entry.start) / 60 * HOUR_HEIGHT)); const lane = { top, height, left: `calc(${column / columns * 100}% + 3px)`, width: `calc(${100 / columns}% - 6px)` };
-          if (entry.kind === 'event') { const event = entry.event; const member = members.find((item) => item.id === event.family_member_id); return <button className="week-timed-item" key={`event-${event.id}`} style={{ ...lane, '--event-color': event.color ?? member?.color ?? 'var(--accent)' } as React.CSSProperties} onClick={() => onEvent(event)} title={event.title}><strong>{event.title}</strong><small>{formatTime(event.start_time)}–{formatTime(event.end_time)} · {member?.name ?? 'Family'}</small></button>; }
-          const reminder = entry.reminder; const member = members.find((item) => item.id === reminder.family_member_id); return <button className={`week-reminder-item ${reminder.completed ? 'completed' : ''}`} key={`reminder-${reminder.id}`} style={{ ...lane, '--event-color': member?.color ?? 'var(--accent)' } as React.CSSProperties} onClick={() => onReminder(reminder)} title={reminder.title}><strong>◷ {reminder.title}</strong><small>{formatTime(reminder.reminder_time)}</small></button>;
-        })}</div>;
-      })}
-    </div><div className="week-end-time">11:59 PM</div>
+export function WeekCalendar(props: Props) {
+  const { date, events, todos, reminders, members, weather, firstDay, onEvent, onTodo, onReminder, onAddEvent } = props;
+  const start = startOfWeek(date, firstDay);
+  const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
+  const now = new Date();
+
+  return <div className="week-board-scroll"><div className="week-board">
+    {days.map((day) => {
+      const dayEvents = events
+        .filter((event) => eventIncludesDay(event.start_time, event.end_time, day))
+        .sort((left, right) => Number(right.all_day) - Number(left.all_day) || +new Date(left.start_time) - +new Date(right.start_time));
+      const dayReminders = reminders.filter((reminder) => isSameDay(new Date(reminder.reminder_time), day));
+      const dayTodos = todos.filter((todo) => todo.due_date === toDateKey(day));
+      const forecast = weather.find((item) => item.date === toDateKey(day));
+      return <section className={`week-day ${isSameDay(day, now) ? 'today' : ''}`} key={day.toISOString()}>
+        <header>
+          <div><small>{new Intl.DateTimeFormat('en', { weekday: 'short' }).format(day)}</small><strong>{day.getDate()}</strong></div>
+          {forecast && <span className="week-weather"><b>{forecast.icon}</b><small>{forecast.high}° / {forecast.low}°</small></span>}
+        </header>
+        <div className="week-day-list">
+          {dayEvents.map((event) => {
+            const member = members.find((item) => item.id === event.family_member_id);
+            const color = event.color ?? member?.color ?? 'var(--accent)';
+            return <button className="week-event-card" style={{ '--event-color': color } as CSSProperties} key={event.id} onClick={() => onEvent(event)}>
+              <span className="week-card-time">{eventLabel(event)}</span>
+              <strong>{event.title}</strong>
+              <small>{member?.name ?? 'Family'}{event.location ? ` · ${event.location}` : ''}</small>
+            </button>;
+          })}
+          {dayReminders.map((reminder) => {
+            const member = members.find((item) => item.id === reminder.family_member_id);
+            return <button className={`week-event-card reminder ${reminder.completed ? 'completed' : ''}`} style={{ '--event-color': member?.color ?? 'var(--accent)' } as CSSProperties} key={reminder.id} onClick={() => onReminder(reminder)}>
+              <span className="week-card-time">◷ {formatTime(reminder.reminder_time)}</span><strong>{reminder.title}</strong><small>Reminder · {member?.name ?? 'Family'}</small>
+            </button>;
+          })}
+          {dayTodos.map((todo) => {
+            const member = members.find((item) => item.id === todo.family_member_id);
+            return <button className={`week-task-card ${todo.completed ? 'completed' : ''}`} key={todo.id} onClick={() => onTodo(todo)}>
+              <span>{todo.completed ? '✓' : '○'}</span><strong>{todo.title}</strong><small style={{ color: member?.color }}>{member?.name ?? 'Family'}</small>
+            </button>;
+          })}
+          {!dayEvents.length && !dayReminders.length && !dayTodos.length && <p className="week-empty">Nothing planned</p>}
+        </div>
+        <button className="week-add-event" onClick={() => onAddEvent(day)}>＋ Add event</button>
+      </section>;
+    })}
   </div></div>;
 }

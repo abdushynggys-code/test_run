@@ -3,8 +3,11 @@ import { flushSync } from 'react-dom';
 import { Redirect } from 'wouter';
 import { useSession } from '../hooks/useSession';
 import { useDashboard } from '../hooks/useDashboard';
+import { useWeather } from '../hooks/useWeather';
 import type { CalendarEvent, CalendarView } from '../types/family';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
+import { DashboardNav, type DashboardSection } from '../components/dashboard/DashboardNav';
+import { TasksBoard } from '../components/dashboard/TasksBoard';
 import { CalendarToolbar } from '../components/calendar/CalendarToolbar';
 import { MemberFilters } from '../components/calendar/MemberFilters';
 import { MonthCalendar } from '../components/calendar/MonthCalendar';
@@ -18,7 +21,8 @@ import { EventForm } from '../components/forms/EventForm';
 import { ReminderForm } from '../components/forms/ReminderForm';
 import { TodoForm } from '../components/forms/TodoForm';
 import { EventDetails } from '../components/events/EventDetails';
-import { applyThemePalette, getThemePalette } from '../lib/themePalettes';
+import { SidekickPanel } from '../components/sidekick/SidekickPanel';
+import type { SidekickAction } from '../lib/sidekick';
 
 type Dialog = 'event' | 'reminder' | 'todo' | null;
 
@@ -39,14 +43,12 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
   const [showFamily, setShowFamily] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSidekick, setShowSidekick] = useState(false);
+  const [section, setSection] = useState<DashboardSection>(() => new URLSearchParams(window.location.search).get('section') === 'tasks' ? 'tasks' : 'home');
   const data = dashboard.data;
+  const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c');
 
   useEffect(() => { if (data) { setView(data.settings.default_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
-  useEffect(() => {
-    if (!data) return;
-    applyThemePalette(getThemePalette(data.settings.palette));
-    document.documentElement.dataset.theme = data.settings.mode;
-  }, [data?.settings]);
 
   const visibleEvents = useMemo(() => data?.events.filter((event) => calendarOwner ? event.family_member_id === calendarOwner : !event.family_member_id || selected.has(event.family_member_id)) ?? [], [calendarOwner, data?.events, selected]);
   const visibleTodos = useMemo(() => data?.todos.filter((todo) => calendarOwner ? todo.family_member_id === calendarOwner : !todo.family_member_id || selected.has(todo.family_member_id)) ?? [], [calendarOwner, data?.todos, selected]);
@@ -72,24 +74,44 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const changeCalendarOwner = (id: string | null) => { animate('fade'); setCalendarOwner(id); };
   const openDay = (next: Date) => { setDate(next); changeView('day'); };
   const openRange = (start: Date, end: Date) => { setDate(start); setEventRange({ start, end }); setDialog('event'); };
+  const openEventForDate = (next: Date) => { setDate(next); setEventRange(null); setDialog('event'); };
+  const changeSection = (next: DashboardSection) => {
+    setSection(next);
+    if (next === 'home') { setDate(new Date()); changeView('week'); }
+  };
+  const validMember = (id: string | null) => data.members.some((member) => member.id === id) ? id : null;
+  const applySidekickAction = (action: SidekickAction) => {
+    if (action.type === 'create_todo' && action.title) void dashboard.addTodo({ title: action.title, description: '', family_member_id: validMember(action.memberId), due_date: action.dueDate, priority: action.priority, star_value: 1 });
+    if (action.type === 'complete_todo' && data.todos.some((todo) => todo.id === action.todoId)) void dashboard.toggleItem('todos', action.todoId, true);
+    if (action.type === 'delete_todo' && data.todos.some((todo) => todo.id === action.todoId)) void dashboard.removeItem('todos', action.todoId);
+    if (action.type === 'delete_event' && data.events.some((event) => event.id === action.eventId)) void dashboard.removeItem('events', action.eventId);
+    if (action.type === 'create_event' && action.title && new Date(action.endTime) > new Date(action.startTime)) void dashboard.addEvent({ title: action.title, description: '', start_time: action.startTime, end_time: action.endTime, all_day: false, location: action.location, family_member_id: validMember(action.memberId), color: null, repeat_rule: 'none' });
+  };
   return <main className="dashboard-shell">
-    <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} isDemo={isDemo} onFamily={() => setShowFamily(!showFamily)} onSettings={() => setShowSettings(true)} />
-    {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} palette={getThemePalette(data.settings.palette)} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
+    <DashboardNav active={section} onSection={changeSection} onSidekick={() => setShowSidekick(true)} onSettings={() => setShowSettings(true)} />
+    <div className="dashboard-workspace">
+    <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} weather={weather} isDemo={isDemo} onFamily={() => setShowFamily(!showFamily)} onSidekick={() => setShowSidekick(true)} />
+    {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
     {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={(value) => void dashboard.saveSettings(value)} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
-    <section className="calendar-card">
+    {section !== 'tasks' && <section className="calendar-card">
       <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={(kind) => { setEventRange(null); setDialog(kind); }} />
       {!calendarOwner && <div className="fixed-member-filters"><MemberFilters members={data.members} selected={selected} onChange={setSelected} /></div>}
       <div className="calendar-viewport"><div className={`calendar-content motion-${motion}`} key={`${calendarOwner ?? 'family'}-${view}-${motionKey}`}>
         {view === 'month' && <MonthCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} firstDay={data.settings.first_day_of_week} onDay={openDay} onRange={openRange} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(reminder) => void dashboard.toggleItem('reminders', reminder.id, !reminder.completed)} />}
-        {view === 'week' && <WeekCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} firstDay={data.settings.first_day_of_week} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(reminder) => void dashboard.toggleItem('reminders', reminder.id, !reminder.completed)} />}
+        {view === 'week' && <WeekCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} weather={weather?.forecast ?? []} firstDay={data.settings.first_day_of_week} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(reminder) => void dashboard.toggleItem('reminders', reminder.id, !reminder.completed)} onAddEvent={openEventForDate} />}
         {view === 'day' && <DayCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(item) => void dashboard.toggleItem('reminders', item.id, !item.completed)} />}
       </div></div>
-    </section>
-    {view !== 'day' && <div className="bottom-grid progress-only"><ChoreProgressPanel items={visibleTodos} members={data.members} /></div>}
+    </section>}
+    {section !== 'tasks' && view !== 'day' && <div className="bottom-grid progress-only"><ChoreProgressPanel items={visibleTodos} members={data.members} /></div>}
+    {section === 'tasks' && <TasksBoard todos={visibleTodos} members={data.members} onToggle={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onAdd={() => setDialog('todo')} />}
     {dialog === 'event' && <Modal title={eventRange ? "Add a multi-day event" : "Add an event"} onClose={() => { setDialog(null); setEventRange(null); }}><EventForm members={data.members} initialDate={eventRange?.start ?? date} initialEndDate={eventRange?.end} initialMemberId={calendarOwner} onCancel={() => { setDialog(null); setEventRange(null); }} onSubmit={(value) => { void dashboard.addEvent(value); setDialog(null); setEventRange(null); }} /></Modal>}
     {dialog === 'reminder' && <Modal title="Add a reminder" onClose={() => setDialog(null)}><ReminderForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addReminder(value); setDialog(null); }} /></Modal>}
     {dialog === 'todo' && <Modal title="Add a family task" onClose={() => setDialog(null)}><TodoForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addTodo(value); setDialog(null); }} /></Modal>}
     {activeEvent && <Modal title="Event details" onClose={() => setActiveEvent(null)}><EventDetails event={activeEvent} members={data.members} onClose={() => setActiveEvent(null)} onDelete={() => { void dashboard.removeItem('events', activeEvent.id); setActiveEvent(null); }} /></Modal>}
+    </div>
+    {showSidekick && <button className="sidekick-backdrop" onClick={() => setShowSidekick(false)} aria-label="Close Sidekick" />}
+    {!showSidekick && <button className="sidekick-fab" onClick={() => setShowSidekick(true)}><span>✦</span><strong>Ask Sidekick</strong><small>Plan with AI</small></button>}
+    <SidekickPanel open={showSidekick} members={data.members} todos={data.todos} events={data.events} weather={weather} weatherLocation={data.settings.weather_location} onClose={() => setShowSidekick(false)} onApply={applySidekickAction} />
   </main>;
 }

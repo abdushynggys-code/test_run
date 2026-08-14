@@ -1,6 +1,10 @@
 @import './styles/base.css';
 @import './styles/layout.css';
 @import './styles/calendar.css';
+@import './styles/week.css';
 @import './styles/overlays.css';
 @import './styles/responsive.css';
 @import './styles/landing.css';
+@import './styles/family-display.css';
+@import './styles/tasks.css';
+@import './styles/sidekick.css';
