@@ -10,8 +10,6 @@ import { MemberFilters } from '../components/calendar/MemberFilters';
 import { MonthCalendar } from '../components/calendar/MonthCalendar';
 import { WeekCalendar } from '../components/calendar/WeekCalendar';
 import { DayCalendar } from '../components/calendar/DayCalendar';
-import { RemindersPanel } from '../components/dashboard/RemindersPanel';
-import { TodosPanel } from '../components/dashboard/TodosPanel';
 import { ChoreProgressPanel } from '../components/dashboard/ChoreProgressPanel';
 import { FamilyPopover } from '../components/family/FamilyPopover';
 import { SettingsPanel } from '../components/settings/SettingsPanel';
@@ -80,7 +78,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={(value) => void dashboard.saveSettings(value)} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
     <section className="calendar-card">
-      <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={() => { setEventRange(null); setDialog('event'); }} />
+      <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={(kind) => { setEventRange(null); setDialog(kind); }} />
       {!calendarOwner && <div className="fixed-member-filters"><MemberFilters members={data.members} selected={selected} onChange={setSelected} /></div>}
       <div className="calendar-viewport"><div className={`calendar-content motion-${motion}`} key={`${calendarOwner ?? 'family'}-${view}-${motionKey}`}>
         {view === 'month' && <MonthCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} firstDay={data.settings.first_day_of_week} onDay={openDay} onRange={openRange} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(reminder) => void dashboard.toggleItem('reminders', reminder.id, !reminder.completed)} />}
@@ -88,7 +86,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
         {view === 'day' && <DayCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(item) => void dashboard.toggleItem('reminders', item.id, !item.completed)} />}
       </div></div>
     </section>
-    {view !== 'day' && <div className="bottom-grid"><RemindersPanel items={visibleReminders} members={data.members} onAdd={() => setDialog('reminder')} onToggle={(id, completed) => void dashboard.toggleItem('reminders', id, completed)} /><TodosPanel items={visibleTodos} members={data.members} onAdd={() => setDialog('todo')} onToggle={(id, completed) => void dashboard.toggleItem('todos', id, completed)} /><ChoreProgressPanel items={visibleTodos} members={data.members} /></div>}
+    {view !== 'day' && <div className="bottom-grid progress-only"><ChoreProgressPanel items={visibleTodos} members={data.members} /></div>}
     {dialog === 'event' && <Modal title={eventRange ? "Add a multi-day event" : "Add an event"} onClose={() => { setDialog(null); setEventRange(null); }}><EventForm members={data.members} initialDate={eventRange?.start ?? date} initialEndDate={eventRange?.end} initialMemberId={calendarOwner} onCancel={() => { setDialog(null); setEventRange(null); }} onSubmit={(value) => { void dashboard.addEvent(value); setDialog(null); setEventRange(null); }} /></Modal>}
     {dialog === 'reminder' && <Modal title="Add a reminder" onClose={() => setDialog(null)}><ReminderForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addReminder(value); setDialog(null); }} /></Modal>}
     {dialog === 'todo' && <Modal title="Add a family task" onClose={() => setDialog(null)}><TodoForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addTodo(value); setDialog(null); }} /></Modal>}
