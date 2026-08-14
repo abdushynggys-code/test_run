@@ -3,7 +3,7 @@ import { addDays, eventIncludesDay, formatTime, isSameDay, startOfWeek, toDateKe
 import { EventPill } from './EventPill';
 import { TodoPill } from './TodoPill';
 
-const HOUR_HEIGHT = 36;
+const HOUR_HEIGHT = 56;
 const DAY_HEIGHT = HOUR_HEIGHT * 24;
 const minutes = (value: string) => { const time = new Date(value); return time.getHours() * 60 + time.getMinutes(); };
 type TimedEntry = { kind: 'event'; event: CalendarEvent; start: number; end: number } | { kind: 'reminder'; reminder: Reminder; start: number; end: number };
@@ -33,9 +33,9 @@ export function WeekCalendar({ date, events, todos, reminders, members, firstDay
         const timedEvents: TimedEntry[] = events.filter((event) => eventIncludesDay(event.start_time, event.end_time, day) && !event.all_day && isSameDay(new Date(event.start_time), new Date(event.end_time))).map((event) => ({ kind: 'event', event, start: minutes(event.start_time), end: minutes(event.end_time) }));
         const timedReminders: TimedEntry[] = reminders.filter((reminder) => isSameDay(new Date(reminder.reminder_time), day)).map((reminder) => ({ kind: 'reminder', reminder, start: minutes(reminder.reminder_time), end: minutes(reminder.reminder_time) + 30 }));
         return <div className={`week-time-column ${isSameDay(day, new Date()) ? 'today' : ''}`} key={day.toISOString()}>{positionEntries([...timedEvents, ...timedReminders]).map(({ entry, column, columns }) => {
-          const top = entry.start / 60 * HOUR_HEIGHT; const height = Math.min(DAY_HEIGHT - top, Math.max(entry.kind === 'event' ? 30 : 24, (entry.end - entry.start) / 60 * HOUR_HEIGHT)); const lane = { top, height, left: `calc(${column / columns * 100}% + 3px)`, width: `calc(${100 / columns}% - 6px)` };
-          if (entry.kind === 'event') { const event = entry.event; const member = members.find((item) => item.id === event.family_member_id); return <button className="week-timed-item" key={`event-${event.id}`} style={{ ...lane, '--event-color': event.color ?? member?.color ?? 'var(--accent)' } as React.CSSProperties} onClick={() => onEvent(event)}><strong>{event.title}</strong><small>{formatTime(event.start_time)}–{formatTime(event.end_time)} · {member?.name ?? 'Family'}</small></button>; }
-          const reminder = entry.reminder; const member = members.find((item) => item.id === reminder.family_member_id); return <button className={`week-reminder-item ${reminder.completed ? 'completed' : ''}`} key={`reminder-${reminder.id}`} style={{ ...lane, '--event-color': member?.color ?? 'var(--accent)' } as React.CSSProperties} onClick={() => onReminder(reminder)}>◷ {reminder.title}<small>{formatTime(reminder.reminder_time)}</small></button>;
+          const top = entry.start / 60 * HOUR_HEIGHT; const height = Math.min(DAY_HEIGHT - top, Math.max(entry.kind === 'event' ? 44 : 38, (entry.end - entry.start) / 60 * HOUR_HEIGHT)); const lane = { top, height, left: `calc(${column / columns * 100}% + 3px)`, width: `calc(${100 / columns}% - 6px)` };
+          if (entry.kind === 'event') { const event = entry.event; const member = members.find((item) => item.id === event.family_member_id); return <button className="week-timed-item" key={`event-${event.id}`} style={{ ...lane, '--event-color': event.color ?? member?.color ?? 'var(--accent)' } as React.CSSProperties} onClick={() => onEvent(event)} title={event.title}><strong>{event.title}</strong><small>{formatTime(event.start_time)}–{formatTime(event.end_time)} · {member?.name ?? 'Family'}</small></button>; }
+          const reminder = entry.reminder; const member = members.find((item) => item.id === reminder.family_member_id); return <button className={`week-reminder-item ${reminder.completed ? 'completed' : ''}`} key={`reminder-${reminder.id}`} style={{ ...lane, '--event-color': member?.color ?? 'var(--accent)' } as React.CSSProperties} onClick={() => onReminder(reminder)} title={reminder.title}><strong>◷ {reminder.title}</strong><small>{formatTime(reminder.reminder_time)}</small></button>;
         })}</div>;
       })}
     </div><div className="week-end-time">11:59 PM</div>
