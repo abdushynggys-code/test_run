@@ -79,6 +79,8 @@ export interface FamilySettings {
   palette: ThemePalette;
   saved_palettes: SavedPalette[];
   default_view: CalendarView;
+  home_view: CalendarView;
+  calendar_view: CalendarView;
   first_day_of_week: 0 | 1;
   temperature_unit: 'c' | 'f';
   weather_location: string;

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { askSidekick, type SidekickAction } from '../../lib/sidekick';
 import type { CalendarEvent, FamilyMember, Todo } from '../../types/family';
@@ -25,7 +26,13 @@ export function SidekickPanel(props: Props) {
   const [input, setInput] = useState('');
   const [pending, setPending] = useState<SidekickAction>({ type: 'none' });
   const [loading, setLoading] = useState(false);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const voice = useVoiceInput((text) => setInput(text));
+
+  useEffect(() => {
+    const container = messagesRef.current;
+    if (open && container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+  }, [loading, messages, open, pending]);
 
   const send = async (text = input) => {
     const message = text.trim();
@@ -42,9 +49,11 @@ export function SidekickPanel(props: Props) {
     } finally { setLoading(false); }
   };
 
-  return <aside className={`sidekick-panel ${open ? 'open' : ''}`} aria-hidden={!open}>
+  return createPortal(<>
+    {open && <button className="sidekick-backdrop" onClick={onClose} aria-label="Close Sidekick" />}
+    <aside className={`sidekick-panel ${open ? 'open' : ''}`} aria-hidden={!open}>
     <header><div className="sidekick-orb">✦</div><div><strong>Sidekick</strong><small>Gemini 2.5 Flash</small></div><button className="icon-button" onClick={onClose} aria-label="Close Sidekick">×</button></header>
-    <div className="sidekick-messages">
+    <div className="sidekick-messages" ref={messagesRef}>
       {messages.map((message, index) => <p className={message.role} key={`${message.role}-${index}`}>{message.text}</p>)}
       {loading && <p className="assistant sidekick-thinking">Thinking<span>…</span></p>}
     </div>
@@ -55,5 +64,6 @@ export function SidekickPanel(props: Props) {
       <input value={input} onChange={(event) => setInput(event.target.value)} placeholder={voice.listening ? 'Listening…' : 'Ask Sidekick anything…'} />
       <button className="sidekick-send" disabled={!input.trim() || loading} aria-label="Send">➜</button>
     </form>
-  </aside>;
+    </aside>
+  </>, document.body);
 }

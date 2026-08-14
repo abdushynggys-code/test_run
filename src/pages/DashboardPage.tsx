@@ -33,7 +33,8 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const isDemo = demoMode || auth.isDemo;
   const dashboard = useDashboard(session, isDemo);
   const [date, setDate] = useState(new Date());
-  const [view, setView] = useState<CalendarView>('month');
+  const [homeView, setHomeView] = useState<CalendarView>('week');
+  const [calendarView, setCalendarView] = useState<CalendarView>('month');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [calendarOwner, setCalendarOwner] = useState<string | null>(null);
   const [eventRange, setEventRange] = useState<{ start: Date; end: Date } | null>(null);
@@ -43,12 +44,16 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
   const [showFamily, setShowFamily] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showSidekick, setShowSidekick] = useState(false);
-  const [section, setSection] = useState<DashboardSection>(() => new URLSearchParams(window.location.search).get('section') === 'tasks' ? 'tasks' : 'home');
+  const [showSidekick, setShowSidekick] = useState(() => new URLSearchParams(window.location.search).get('sidekick') === 'open');
+  const [section, setSection] = useState<DashboardSection>(() => {
+    const initial = new URLSearchParams(window.location.search).get('section');
+    return initial === 'calendar' || initial === 'tasks' ? initial : 'home';
+  });
   const data = dashboard.data;
+  const view = section === 'home' ? homeView : calendarView;
   const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c');
 
-  useEffect(() => { if (data) { setView(data.settings.default_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
+  useEffect(() => { if (data) { setHomeView(data.settings.home_view); setCalendarView(data.settings.calendar_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
 
   const visibleEvents = useMemo(() => data?.events.filter((event) => calendarOwner ? event.family_member_id === calendarOwner : !event.family_member_id || selected.has(event.family_member_id)) ?? [], [calendarOwner, data?.events, selected]);
   const visibleTodos = useMemo(() => data?.todos.filter((todo) => calendarOwner ? todo.family_member_id === calendarOwner : !todo.family_member_id || selected.has(todo.family_member_id)) ?? [], [calendarOwner, data?.todos, selected]);
@@ -69,7 +74,8 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const changeView = (next: CalendarView) => {
     const order: CalendarView[] = ['month', 'week', 'day'];
     const nextMotion = order.indexOf(next) > order.indexOf(view) ? 'forward' : order.indexOf(next) < order.indexOf(view) ? 'backward' : 'fade';
-    transitionCalendar(nextMotion, () => setView(next)); void dashboard.saveSettings({ default_view: next });
+    transitionCalendar(nextMotion, () => section === 'home' ? setHomeView(next) : setCalendarView(next));
+    void dashboard.saveSettings(section === 'home' ? { home_view: next } : { calendar_view: next });
   };
   const changeCalendarOwner = (id: string | null) => { animate('fade'); setCalendarOwner(id); };
   const openDay = (next: Date) => { setDate(next); changeView('day'); };
@@ -77,7 +83,12 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const openEventForDate = (next: Date) => { setDate(next); setEventRange(null); setDialog('event'); };
   const changeSection = (next: DashboardSection) => {
     setSection(next);
-    if (next === 'home') { setDate(new Date()); changeView('week'); }
+    if (next === 'home') setDate(new Date());
+  };
+  const saveSettings = (value: Partial<typeof data.settings>) => {
+    if (value.home_view) setHomeView(value.home_view);
+    if (value.calendar_view) setCalendarView(value.calendar_view);
+    void dashboard.saveSettings(value);
   };
   const validMember = (id: string | null) => data.members.some((member) => member.id === id) ? id : null;
   const applySidekickAction = (action: SidekickAction) => {
@@ -92,7 +103,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     <div className="dashboard-workspace">
     <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} weather={weather} isDemo={isDemo} onFamily={() => setShowFamily(!showFamily)} onSidekick={() => setShowSidekick(true)} />
     {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
-    {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={(value) => void dashboard.saveSettings(value)} onClose={() => setShowSettings(false)} /></>}
+    {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={saveSettings} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
     {section !== 'tasks' && <section className="calendar-card">
       <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={(kind) => { setEventRange(null); setDialog(kind); }} />
@@ -110,7 +121,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     {dialog === 'todo' && <Modal title="Add a family task" onClose={() => setDialog(null)}><TodoForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addTodo(value); setDialog(null); }} /></Modal>}
     {activeEvent && <Modal title="Event details" onClose={() => setActiveEvent(null)}><EventDetails event={activeEvent} members={data.members} onClose={() => setActiveEvent(null)} onDelete={() => { void dashboard.removeItem('events', activeEvent.id); setActiveEvent(null); }} /></Modal>}
     </div>
-    {showSidekick && <button className="sidekick-backdrop" onClick={() => setShowSidekick(false)} aria-label="Close Sidekick" />}
     {!showSidekick && <button className="sidekick-fab" onClick={() => setShowSidekick(true)}><span>✦</span><strong>Ask Sidekick</strong><small>Plan with AI</small></button>}
     <SidekickPanel open={showSidekick} members={data.members} todos={data.todos} events={data.events} weather={weather} weatherLocation={data.settings.weather_location} onClose={() => setShowSidekick(false)} onApply={applySidekickAction} />
   </main>;

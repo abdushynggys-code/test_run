@@ -23,12 +23,16 @@ Deno.serve(async (request) => {
   if (request.method !== 'POST') return json({ error: 'Use a POST request.' }, 405);
 
   try {
+    const body = await request.json() as { prompt?: unknown; system?: unknown; json?: unknown };
     if (!GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY is not configured');
-      return json({ error: 'AI is not configured yet. Add the Gemini secret and deploy this function.' }, 503);
+      const message = 'Sidekick is installed, but its Gemini key has not been connected yet. Add GEMINI_API_KEY to activate AI answers.';
+      const text = body.json === true
+        ? JSON.stringify({ reply: message, action: { type: 'none' } })
+        : message;
+      return json({ text });
     }
 
-    const body = await request.json() as { prompt?: unknown; system?: unknown; json?: unknown };
     const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
     const system = typeof body.system === 'string' ? body.system.trim() : '';
     if (!prompt) return json({ error: 'Write a message for Sidekick.' }, 400);
