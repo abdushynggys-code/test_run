@@ -1,21 +1,18 @@
-import { useEffect, useRef } from 'react';
 import type { CalendarEvent, FamilyMember, Reminder, Todo } from '../../types/family';
 import { addDays, eventIncludesDay, formatTime, isSameDay, startOfWeek, toDateKey } from '../../lib/date';
 import { EventPill } from './EventPill';
 import { TodoPill } from './TodoPill';
 
-const HOUR_HEIGHT = 48;
+const HOUR_HEIGHT = 30;
 const minutes = (value: string) => { const time = new Date(value); return time.getHours() * 60 + time.getMinutes(); };
 
 interface Props { date: Date; events: CalendarEvent[]; todos: Todo[]; reminders: Reminder[]; members: FamilyMember[]; firstDay: 0 | 1; onEvent: (event: CalendarEvent) => void; onTodo: (todo: Todo) => void; onReminder: (reminder: Reminder) => void; }
 
 export function WeekCalendar({ date, events, todos, reminders, members, firstDay, onEvent, onTodo, onReminder }: Props) {
-  const scroll = useRef<HTMLDivElement>(null);
   const start = startOfWeek(date, firstDay);
   const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
-  useEffect(() => { if (scroll.current) scroll.current.scrollTop = 7 * HOUR_HEIGHT; }, []);
 
-  return <div className="week-timeline-scroll" ref={scroll}><div className="week-timeline">
+  return <div className="week-timeline-scroll"><div className="week-timeline">
     <div className="week-timeline-header"><span /><>{days.map((day) => <header className={isSameDay(day, new Date()) ? 'today' : ''} key={day.toISOString()}><small>{new Intl.DateTimeFormat('en', { weekday: 'short' }).format(day)}</small><strong>{day.getDate()}</strong></header>)}</></div>
     <div className="week-all-day"><span>ALL DAY</span>{days.map((day) => <div key={day.toISOString()}>
       {events.filter((event) => eventIncludesDay(event.start_time, event.end_time, day) && (event.all_day || !isSameDay(new Date(event.start_time), new Date(event.end_time)))).map((event) => <EventPill key={event.id} event={event} member={members.find((member) => member.id === event.family_member_id)} onClick={() => onEvent(event)} />)}
