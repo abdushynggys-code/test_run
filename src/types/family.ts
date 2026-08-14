@@ -67,6 +67,7 @@ export interface Todo {
   family_member_id: string | null;
   due_date: string | null;
   priority: Priority;
+  star_value: number;
   completed: boolean;
 }
 
