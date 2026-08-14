@@ -5,7 +5,7 @@ export type AddKind = 'event' | 'reminder' | 'todo';
 const choices: { kind: AddKind; icon: string; title: string; detail: string }[] = [
   { kind: 'event', icon: '□', title: 'Event', detail: 'Add something to the calendar' },
   { kind: 'reminder', icon: '◷', title: 'Reminder', detail: 'Remember something at a time' },
-  { kind: 'todo', icon: '✓', title: 'To-do', detail: 'Create a task with stars' },
+  { kind: 'todo', icon: '✓', title: 'To-do', detail: 'Create task' },
 ];
 
 export function AddMenu({ mobile = false, onSelect }: { mobile?: boolean; onSelect: (kind: AddKind) => void }) {
