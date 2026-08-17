@@ -8,15 +8,15 @@
   .date-block time { margin: 0; font-size: 21px; }
   .demo-badge { display: none; }
   .calendar-card { margin-top: 0; border-width: 0 0 1px; border-radius: 0; box-shadow: none; }
-  .calendar-toolbar { padding: 11px 10px 8px; }
+  .calendar-toolbar { position: sticky; z-index: 16; top: 60px; padding: 11px 10px 8px; background: rgba(255,255,255,.96); box-shadow: 0 1px 0 var(--line); backdrop-filter: blur(18px); }
   .calendar-title { margin-bottom: 7px; }
   .calendar-picker-button strong { font-size: 16px; }
   .calendar-picker-menu { position: fixed; top: 72px; left: 10px; width: calc(100vw - 20px); }
   .calendar-controls { display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; gap: 6px; }
   .calendar-controls .secondary-button { display: none; }
   .calendar-controls h2 { min-width: 0; font-size: 16px; text-align: center; }
-  .segmented { grid-column: 1 / -1; width: 100%; margin: 2px 0 0; }
-  .segmented button { flex: 1; }
+  .segmented { display: grid !important; grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 2px 0 0; touch-action: manipulation; }
+  .segmented button { min-width: 0; min-height: 44px; padding: 4px 8px; pointer-events: auto; touch-action: manipulation; }
   .add-event-desktop { display: none; }
   .add-event-mobile { display: block; }
   .filter-row { padding: 7px 8px 9px; }

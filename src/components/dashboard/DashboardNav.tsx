@@ -17,7 +17,7 @@ export function DashboardNav({ active, onSection, onSidekick, onSettings }: Prop
   return <nav className="dashboard-nav" aria-label="Main navigation">
     <div className="nav-brand" aria-label="Kinboard">K</div>
     <div className="nav-main">{items.map((item) =>
-      <button className={active === item.id ? 'active' : ''} key={item.id} onClick={() => onSection(item.id)}>
+      <button aria-current={active === item.id ? 'page' : undefined} className={active === item.id ? 'active' : ''} key={item.id} onClick={() => onSection(item.id)}>
         <span>{item.icon}</span><small>{item.label}</small>
       </button>)}</div>
     <div className="nav-bottom">

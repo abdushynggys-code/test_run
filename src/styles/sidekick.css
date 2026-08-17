@@ -39,6 +39,10 @@
 @keyframes voice-pulse { to { box-shadow: 0 0 0 7px rgba(228,90,99,.15); } }
 @keyframes sidekick-pulse { to { opacity: .25; } }
 
+@media (max-width: 1024px) {
+  .sidekick-fab { display: none; }
+}
+
 @media (max-width: 680px) {
   .sidekick-panel { top: 8px; right: 8px; left: 8px; width: auto; max-width: none; height: calc(100dvh - 84px); max-height: calc(100dvh - 84px); border-radius: 18px; }
   .sidekick-fab { right: 12px; bottom: 82px; min-width: 56px; width: 56px; min-height: 56px; border-radius: 18px; padding: 8px; }

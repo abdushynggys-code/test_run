@@ -13,7 +13,7 @@ import { MemberFilters } from '../components/calendar/MemberFilters';
 import { MonthCalendar } from '../components/calendar/MonthCalendar';
 import { WeekCalendar } from '../components/calendar/WeekCalendar';
 import { DayCalendar } from '../components/calendar/DayCalendar';
-import { ChoreProgressPanel } from '../components/dashboard/ChoreProgressPanel';
+import { HomeOverview } from '../components/dashboard/HomeOverview';
 import { WeatherLocationPrompt } from '../components/dashboard/WeatherLocationPrompt';
 import { FamilyPopover } from '../components/family/FamilyPopover';
 import { SettingsPanel } from '../components/settings/SettingsPanel';
@@ -34,7 +34,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const isDemo = demoMode || auth.isDemo;
   const dashboard = useDashboard(session, isDemo);
   const [date, setDate] = useState(new Date());
-  const [homeView, setHomeView] = useState<CalendarView>('week');
   const [calendarView, setCalendarView] = useState<CalendarView>('month');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [calendarOwner, setCalendarOwner] = useState<string | null>(null);
@@ -51,10 +50,10 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     return initial === 'calendar' || initial === 'tasks' ? initial : 'home';
   });
   const data = dashboard.data;
-  const view = section === 'home' ? homeView : calendarView;
+  const view = calendarView;
   const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c', data?.settings.weather_latitude ?? null, data?.settings.weather_longitude ?? null);
 
-  useEffect(() => { if (data) { setHomeView(data.settings.home_view); setCalendarView(data.settings.calendar_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
+  useEffect(() => { if (data) { setCalendarView(data.settings.calendar_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
 
   const visibleEvents = useMemo(() => data?.events.filter((event) => calendarOwner ? event.family_member_id === calendarOwner : !event.family_member_id || selected.has(event.family_member_id)) ?? [], [calendarOwner, data?.events, selected]);
   const visibleTodos = useMemo(() => data?.todos.filter((todo) => calendarOwner ? todo.family_member_id === calendarOwner : !todo.family_member_id || selected.has(todo.family_member_id)) ?? [], [calendarOwner, data?.todos, selected]);
@@ -75,8 +74,8 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const changeView = (next: CalendarView) => {
     const order: CalendarView[] = ['month', 'week', 'day'];
     const nextMotion = order.indexOf(next) > order.indexOf(view) ? 'forward' : order.indexOf(next) < order.indexOf(view) ? 'backward' : 'fade';
-    transitionCalendar(nextMotion, () => section === 'home' ? setHomeView(next) : setCalendarView(next));
-    void dashboard.saveSettings(section === 'home' ? { home_view: next } : { calendar_view: next });
+    transitionCalendar(nextMotion, () => setCalendarView(next));
+    void dashboard.saveSettings({ calendar_view: next });
   };
   const changeCalendarOwner = (id: string | null) => { animate('fade'); setCalendarOwner(id); };
   const openDay = (next: Date) => { setDate(next); changeView('day'); };
@@ -87,7 +86,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     if (next === 'home') setDate(new Date());
   };
   const saveSettings = (value: Partial<typeof data.settings>) => {
-    if (value.home_view) setHomeView(value.home_view);
     if (value.calendar_view) setCalendarView(value.calendar_view);
     void dashboard.saveSettings(value);
   };
@@ -103,11 +101,12 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     <DashboardNav active={section} onSection={changeSection} onSidekick={() => setShowSidekick(true)} onSettings={() => setShowSettings(true)} />
     <div className="dashboard-workspace">
     <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} weather={weather} isDemo={isDemo} onFamily={() => setShowFamily(!showFamily)} onSidekick={() => setShowSidekick(true)} />
-    <WeatherLocationPrompt settings={data.settings} onSave={saveSettings} />
+    {section === 'home' && <WeatherLocationPrompt settings={data.settings} onSave={saveSettings} />}
     {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
     {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={saveSettings} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
-    {section !== 'tasks' && <section className="calendar-card">
+    {section === 'home' && <HomeOverview events={visibleEvents} todos={visibleTodos} members={data.members} weather={weather} weatherLocation={data.settings.weather_location} onCalendar={() => changeSection('calendar')} onTasks={() => changeSection('tasks')} onAddEvent={() => { setEventRange(null); setDialog('event'); }} onToggleTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onEvent={setActiveEvent} />}
+    {section === 'calendar' && <section className="calendar-card">
       <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={(kind) => { setEventRange(null); setDialog(kind); }} />
       {!calendarOwner && <div className="fixed-member-filters"><MemberFilters members={data.members} selected={selected} onChange={setSelected} /></div>}
       <div className="calendar-viewport"><div className={`calendar-content motion-${motion}`} key={`${calendarOwner ?? 'family'}-${view}-${motionKey}`}>
@@ -116,7 +115,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
         {view === 'day' && <DayCalendar date={date} events={visibleEvents} todos={visibleTodos} reminders={visibleReminders} members={data.members} onEvent={setActiveEvent} onTodo={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onReminder={(item) => void dashboard.toggleItem('reminders', item.id, !item.completed)} />}
       </div></div>
     </section>}
-    {section !== 'tasks' && view !== 'day' && <div className="bottom-grid progress-only"><ChoreProgressPanel items={visibleTodos} members={data.members} /></div>}
     {section === 'tasks' && <TasksBoard todos={visibleTodos} members={data.members} onToggle={(todo) => void dashboard.toggleItem('todos', todo.id, !todo.completed)} onAdd={() => setDialog('todo')} />}
     {dialog === 'event' && <Modal title={eventRange ? "Add a multi-day event" : "Add an event"} onClose={() => { setDialog(null); setEventRange(null); }}><EventForm members={data.members} initialDate={eventRange?.start ?? date} initialEndDate={eventRange?.end} initialMemberId={calendarOwner} onCancel={() => { setDialog(null); setEventRange(null); }} onSubmit={(value) => { void dashboard.addEvent(value); setDialog(null); setEventRange(null); }} /></Modal>}
     {dialog === 'reminder' && <Modal title="Add a reminder" onClose={() => setDialog(null)}><ReminderForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addReminder(value); setDialog(null); }} /></Modal>}

@@ -42,3 +42,10 @@
   .week-empty { margin: 0; padding: 13px 4px; }
   .week-add-event { min-height: 40px; }
 }
+
+@media (min-width: 681px) and (max-width: 1024px) {
+  .week-board-scroll { overflow: visible; padding: 10px; background: #eef2f6; }
+  .week-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; min-width: 0; min-height: 0; }
+  .week-day { grid-template-rows: auto auto auto; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; }
+  .week-day-list { max-height: none; overflow: visible; }
+}

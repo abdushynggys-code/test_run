@@ -32,8 +32,7 @@ export function SettingsPanel({ settings, isDemo, onSave, onClose }: Props) {
   return <aside className="settings-panel">
     <header><div><p className="eyebrow">KINBOARD</p><h2>Settings</h2></div><button className="icon-button" onClick={onClose} aria-label="Close settings">×</button></header>
     <section><h3>Calendar</h3>
-      <label>Home view<select value={settings.home_view} onChange={(event) => onSave({ home_view: event.target.value as CalendarView })}><option value="week">Week</option><option value="month">Month</option><option value="day">Day</option></select></label>
-      <label>Calendar view<select value={settings.calendar_view} onChange={(event) => onSave({ calendar_view: event.target.value as CalendarView })}><option value="month">Month</option><option value="week">Week</option><option value="day">Day</option></select></label>
+      <label>Default view<select value={settings.calendar_view} onChange={(event) => onSave({ calendar_view: event.target.value as CalendarView })}><option value="month">Month</option><option value="week">Week</option><option value="day">Day</option></select></label>
       <label>Week starts<select value={settings.first_day_of_week} onChange={(event) => onSave({ first_day_of_week: Number(event.target.value) as 0 | 1 })}><option value="1">Monday</option><option value="0">Sunday</option></select></label>
     </section>
     <section><h3>Weather</h3>
