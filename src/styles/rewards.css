@@ -20,7 +20,12 @@
 .profile-level { margin-top:5px; height:5px; overflow:hidden; border-radius:9px; background:var(--line); }
 .profile-level i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#f4c84c,#ff9b45); }
 .profile-reward em { color:#a97500; font-style:normal; font-size:9px; font-weight:850; }
+.task-pass-notice { display:flex; align-items:center; gap:12px; margin:12px 18px 0; border:1px solid #e6c65b; border-radius:16px; padding:11px 14px; color:#5f4700; background:linear-gradient(105deg,#fff5bd,#fffdf2); box-shadow:0 7px 20px rgba(154,112,0,.1); }
+.task-pass-notice > span { display:grid; place-items:center; flex:0 0 40px; width:40px; height:40px; border-radius:13px; background:#fff; font-size:22px; box-shadow:0 3px 10px rgba(154,112,0,.12); }
+.task-pass-notice strong,.task-pass-notice small { display:block; }
+.task-pass-notice small { margin-top:2px; color:#7d681e; }
 @media (max-width:600px) {
   .reward-ranks article { grid-template-columns:22px 36px minmax(0,1fr) auto; padding:8px; }
   .reward-avatar { width:35px; height:35px; }
+  .task-pass-notice { margin:9px 10px 0; }
 }

@@ -31,6 +31,7 @@ export interface FamilyMember {
   emoji: string;
   member_type: 'adult' | 'child' | 'group';
   active: boolean;
+  level_20_pass_date: string | null;
 }
 
 export interface CalendarEvent {

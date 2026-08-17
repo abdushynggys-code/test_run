@@ -76,6 +76,10 @@ export const familyApi = {
     const { error } = await supabase.from('family_members').update({ name, emoji: name.slice(0, 1).toUpperCase() }).eq('id', memberId);
     if (error) throw error;
   },
+  async grantLevel20Pass(memberId: string, date: string) {
+    const { error } = await supabase.from('family_members').update({ level_20_pass_date: date }).eq('id', memberId).is('level_20_pass_date', null);
+    if (error) throw error;
+  },
   async saveSettings(familyId: string, value: Partial<FamilySettings>) {
     const { error } = await supabase.from('family_settings').update(value).eq('family_id', familyId);
     if (error) throw error;

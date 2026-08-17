@@ -24,12 +24,13 @@ import { TodoForm } from '../components/forms/TodoForm';
 import { EventDetails } from '../components/events/EventDetails';
 import { SidekickPanel } from '../components/sidekick/SidekickPanel';
 import type { SidekickAction } from '../lib/sidekick';
-import { dailyLeaderboard, type RewardRank } from '../lib/rewards';
+import { dailyLeaderboard, taskPassMembers, todosDuringTaskPass, type RewardRank } from '../lib/rewards';
 import { WinnerCelebration } from '../components/rewards/WinnerCelebration';
+import { TaskPassNotice } from '../components/rewards/TaskPassNotice';
 import { OnboardingTour } from '../components/onboarding/OnboardingTour';
-
+import { toDateKey } from '../lib/date';
+import { taskCompletionRewards } from '../lib/taskCompletionRewards';
 type Dialog = 'event' | 'reminder' | 'todo' | null;
-
 export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const auth = useSession();
   const session = demoMode ? null : auth.session;
@@ -58,12 +59,13 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const data = dashboard.data;
   const view = calendarView;
   const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c', data?.settings.weather_latitude ?? null, data?.settings.weather_longitude ?? null);
-
   useEffect(() => { if (data) { setCalendarView(data.settings.calendar_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
   useEffect(() => { if (data && !data.settings.tutorial_completed && tourFamily !== data.family.id) { setTourFamily(data.family.id); setShowTutorial(true); } }, [data, tourFamily]);
 
+  const passMembers = useMemo(() => data ? taskPassMembers(data.members) : [], [data]);
+  const availableTodos = useMemo(() => data ? todosDuringTaskPass(data.todos, data.members) : [], [data]);
   const visibleEvents = useMemo(() => data?.events.filter((event) => calendarOwner ? event.family_member_id === calendarOwner : !event.family_member_id || selected.has(event.family_member_id)) ?? [], [calendarOwner, data?.events, selected]);
-  const visibleTodos = useMemo(() => data?.todos.filter((todo) => calendarOwner ? todo.family_member_id === calendarOwner : !todo.family_member_id || selected.has(todo.family_member_id)) ?? [], [calendarOwner, data?.todos, selected]);
+  const visibleTodos = useMemo(() => availableTodos.filter((todo) => calendarOwner ? todo.family_member_id === calendarOwner : !todo.family_member_id || selected.has(todo.family_member_id)), [availableTodos, calendarOwner, selected]);
   const visibleReminders = useMemo(() => data?.reminders.filter((item) => calendarOwner ? item.family_member_id === calendarOwner : !item.family_member_id || selected.has(item.family_member_id)) ?? [], [calendarOwner, data?.reminders, selected]);
   const ranks = useMemo(() => data ? dailyLeaderboard(data.members, data.todos, data.settings.leaderboard_include_adults) : [], [data]);
   const winnerIds = useMemo(() => new Set(ranks.filter((rank) => rank.isWinner).map((rank) => rank.member.id)), [ranks]);
@@ -100,9 +102,10 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const validMember = (id: string | null) => data.members.some((member) => member.id === id) ? id : null;
   const toggleTodo = (todo: Todo) => {
     const completed = !todo.completed;
-    if (completed && data.members.some((member) => member.id === todo.family_member_id && (member.member_type === 'child' || data.settings.leaderboard_include_adults && member.member_type === 'adult'))) {
-      const projected = data.todos.map((item) => item.id === todo.id ? { ...item, completed: true, completed_at: new Date().toISOString() } : item);
-      setCelebrationWinners(dailyLeaderboard(data.members, projected, data.settings.leaderboard_include_adults).filter((rank) => rank.isWinner));
+    if (completed) {
+      const rewards = taskCompletionRewards(todo, data.todos, data.members, data.settings.leaderboard_include_adults, winnerIds);
+      setCelebrationWinners(rewards.newlyCrowned);
+      if (rewards.passMember) void dashboard.grantLevel20Pass(rewards.passMember.id, toDateKey(new Date()));
     }
     void dashboard.toggleItem('todos', todo.id, completed);
   };
@@ -122,7 +125,8 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} todos={data.todos} winnerIds={displayedWinnerIds} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
     {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={saveSettings} onTutorial={() => { setShowSettings(false); setShowTutorial(true); }} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
-    {section === 'home' && <HomeOverview events={data.events} todos={data.todos} members={data.members} weather={weather} weatherLocation={data.settings.weather_location} includeAdults={data.settings.leaderboard_include_adults} onProfiles={() => setShowFamily(true)} onCalendar={() => changeSection('calendar')} onTasks={() => changeSection('tasks')} onAddEvent={() => { setEventRange(null); setDialog('event'); }} onToggleTodo={toggleTodo} onEvent={setActiveEvent} />}
+    <TaskPassNotice members={passMembers} />
+    {section === 'home' && <HomeOverview events={data.events} todos={availableTodos} members={data.members} weather={weather} weatherLocation={data.settings.weather_location} includeAdults={data.settings.leaderboard_include_adults} onProfiles={() => setShowFamily(true)} onCalendar={() => changeSection('calendar')} onTasks={() => changeSection('tasks')} onAddEvent={() => { setEventRange(null); setDialog('event'); }} onToggleTodo={toggleTodo} onEvent={setActiveEvent} />}
     {section === 'calendar' && <section className="calendar-card">
       <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={(kind) => { setEventRange(null); setDialog(kind); }} />
       {!calendarOwner && <div className="fixed-member-filters"><MemberFilters members={data.members} selected={selected} onChange={setSelected} /></div>}

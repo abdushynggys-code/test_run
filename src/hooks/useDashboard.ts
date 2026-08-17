@@ -31,13 +31,14 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
     addMember: (value: CreateMember, file?: File) => data && run(async () => {
       const avatarUrl = file ? await familyApi.uploadAvatar(session?.user.id ?? '', file) : null;
       await familyApi.addMember(data.family.id, { ...value, avatar_url: avatarUrl });
-    }, (current) => ({ ...current, members: [...current.members, { ...value, avatar_url: file ? URL.createObjectURL(file) : null, id: id(), family_id: current.family.id, active: true }] })),
+    }, (current) => ({ ...current, members: [...current.members, { ...value, avatar_url: file ? URL.createObjectURL(file) : null, id: id(), family_id: current.family.id, active: true, level_20_pass_date: null }] })),
     updateMemberAvatar: (memberId: string, file: File) => run(async () => {
       const avatarPath = await familyApi.uploadAvatar(session?.user.id ?? '', file);
       await familyApi.updateMemberAvatar(memberId, avatarPath);
     }, (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, avatar_url: URL.createObjectURL(file) } : member) })),
     updateMemberColor: (memberId: string, color: string) => run(() => familyApi.updateMemberColor(memberId, color), (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, color } : member) })),
     updateMemberName: (memberId: string, name: string) => run(() => familyApi.updateMemberName(memberId, name), (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, name, emoji: name.slice(0, 1).toUpperCase() } : member) })),
+    grantLevel20Pass: (memberId: string, date: string) => run(() => familyApi.grantLevel20Pass(memberId, date), (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, level_20_pass_date: date } : member) })),
     removeMember: (memberId: string) => run(() => familyApi.deactivateMember(memberId), (current) => ({ ...current, members: current.members.filter((member) => member.id !== memberId) })),
     toggleItem: (table: 'todos' | 'reminders', itemId: string, completed: boolean) => run(() => familyApi.toggle(table, itemId, completed), (current) => ({ ...current, [table]: current[table].map((item) => item.id === itemId ? { ...item, completed, ...(table === 'todos' ? { completed_at: completed ? new Date().toISOString() : null } : {}) } : item) })),
     removeItem: (table: 'events' | 'todos' | 'reminders', itemId: string) => run(() => familyApi.remove(table, itemId), (current) => ({ ...current, [table]: current[table].filter((item) => item.id !== itemId) })),

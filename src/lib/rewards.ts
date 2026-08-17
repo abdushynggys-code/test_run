@@ -32,3 +32,13 @@ export function rewardProgress(memberId: string, todos: Todo[]): RewardProgress 
   const levelStars = totalStars % 20;
   return { level: Math.floor(totalStars / 20) + 1, totalStars, levelStars, starsToNext: 20 - levelStars, percent: levelStars * 5 };
 }
+
+export function taskPassMembers(members: FamilyMember[], date = new Date()) {
+  const day = toDateKey(date);
+  return members.filter((member) => member.level_20_pass_date === day);
+}
+
+export function todosDuringTaskPass(todos: Todo[], members: FamilyMember[], date = new Date()) {
+  const resting = new Set(taskPassMembers(members, date).map((member) => member.id));
+  return todos.filter((todo) => todo.completed || !todo.family_member_id || !resting.has(todo.family_member_id));
+}
