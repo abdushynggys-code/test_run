@@ -68,6 +68,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const ranks = useMemo(() => data ? dailyLeaderboard(data.members, data.todos, data.settings.leaderboard_include_adults) : [], [data]);
   const winnerIds = useMemo(() => new Set(ranks.filter((rank) => rank.isWinner).map((rank) => rank.member.id)), [ranks]);
   const closeCelebration = useCallback(() => setCelebrationWinners([]), []);
+  const changeSection = useCallback((next: DashboardSection) => { setSection(next); if (next === 'home') setDate(new Date()); }, []);
   if (loading) return <main className="loading-screen"><span className="brand-mark">K</span><p>Opening your family dashboard…</p></main>;
   if (!isDemo && !session) return <Redirect to="/login" />;
   if (!data) return <main className="loading-screen"><p>{dashboard.error || 'Loading family…'}</p></main>;
@@ -91,10 +92,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const openDay = (next: Date) => { setDate(next); changeView('day'); };
   const openRange = (start: Date, end: Date) => { setDate(start); setEventRange({ start, end }); setDialog('event'); };
   const openEventForDate = (next: Date) => { setDate(next); setEventRange(null); setDialog('event'); };
-  const changeSection = (next: DashboardSection) => {
-    setSection(next);
-    if (next === 'home') setDate(new Date());
-  };
   const saveSettings = (value: Partial<typeof data.settings>) => {
     if (value.calendar_view) setCalendarView(value.calendar_view);
     void dashboard.saveSettings(value);
@@ -143,6 +140,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     {!showSidekick && <button className="sidekick-fab" onClick={() => setShowSidekick(true)}><span>✦</span><strong>Ask Sidekick</strong><small>Plan with AI</small></button>}
     <SidekickPanel open={showSidekick} members={data.members} todos={data.todos} events={data.events} weather={weather} weatherLocation={data.settings.weather_location} onClose={() => setShowSidekick(false)} onApply={applySidekickAction} onUploadPhoto={dashboard.uploadRoomPhoto} />
     {celebrationWinners.length > 0 && <WinnerCelebration winners={celebrationWinners} onClose={closeCelebration} />}
-    {showTutorial && <OnboardingTour onFinish={() => { setShowTutorial(false); saveSettings({ tutorial_completed: true }); }} />}
+    {showTutorial && <OnboardingTour onNavigate={changeSection} onFinish={() => { setShowTutorial(false); saveSettings({ tutorial_completed: true }); }} />}
   </main>;
 }

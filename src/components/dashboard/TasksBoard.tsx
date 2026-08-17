@@ -22,7 +22,7 @@ export function TasksBoard({ todos, members, onToggle, onAdd }: Props) {
       <div><p className="eyebrow">ROUTINES & CHORES</p><h1>Family tasks</h1><span>{today}</span></div>
       <div className="tasks-board-actions"><button className={`task-filter-button ${showFinished ? 'active' : ''}`} onClick={() => setShowFinished((value) => !value)}>✓ Finished</button><button className="primary-button" onClick={onAdd}>＋ Add task</button></div>
     </header>
-    <div className="task-summary-row">
+    <div className="task-summary-row" data-tour="task-rewards">
       <article><span>◎</span><div><strong>{todos.length - completed.length}</strong><small>still to do</small></div></article>
       <article><span>★</span><div><strong>{earnedStars}</strong><small>stars earned</small></div></article>
       <article><span>✓</span><div><strong>{completed.length}</strong><small>completed</small></div></article>

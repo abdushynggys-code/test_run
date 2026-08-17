@@ -35,7 +35,7 @@ export function HomeOverview(props: Props) {
       <div><p className="eyebrow">FAMILY OVERVIEW</p><h1>Here’s what’s coming up</h1><span>{new Intl.DateTimeFormat('en', { weekday: 'long', month: 'long', day: 'numeric' }).format(now)}</span></div>
       <button className="primary-button" onClick={onAddEvent}>＋ Add event</button>
     </header>
-    <div className="home-summary">
+    <div className="home-summary" data-tour="home-overview">
       <article><span>◷</span><div><strong>{todayEvents}</strong><small>events today</small></div></article>
       <article><span>✓</span><div><strong>{dueToday}</strong><small>tasks due today</small></div></article>
       <article><span>{weather?.icon ?? '○'}</span><div><strong>{weather ? `${weather.temperature}°` : '--'}</strong><small>{weatherLocation}</small></div></article>

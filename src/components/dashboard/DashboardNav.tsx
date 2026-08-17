@@ -21,7 +21,7 @@ export function DashboardNav({ active, onSection, onSidekick, onSettings }: Prop
         <span>{item.icon}</span><small>{item.label}</small>
       </button>)}</div>
     <div className="nav-bottom">
-      <button className="sidekick-nav-button" onClick={onSidekick}><span>✦</span><small>Sidekick</small></button>
+      <button className="sidekick-nav-button" data-tour="sidekick" onClick={onSidekick}><span>✦</span><small>Sidekick</small></button>
       <button onClick={onSettings}><span>⚙</span><small>Settings</small></button>
     </div>
   </nav>;
