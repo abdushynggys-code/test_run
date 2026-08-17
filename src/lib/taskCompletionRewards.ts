@@ -21,7 +21,7 @@ export function taskCompletionRewards(
     ? { ...item, completed: true, completed_at: new Date().toISOString() }
     : item);
   const newlyCrowned = dailyLeaderboard(members, projected, includeAdults)
-    .filter((rank) => rank.isWinner && !currentWinnerIds.has(rank.member.id));
+    .filter((rank) => rank.member.id === member.id && rank.isWinner && !currentWinnerIds.has(member.id));
   const earnsPass = member.member_type === 'child'
     && !member.level_20_pass_date
     && rewardProgress(member.id, projected).level >= 20;
