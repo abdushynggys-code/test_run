@@ -1,0 +1,57 @@
+/* Final interaction and responsive pass. Kept last so it can normalize every screen. */
+html { min-width: 320px; min-height: 100%; scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { min-height: 100dvh; overflow-x: clip; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+#root { min-height: 100dvh; }
+button, [role='button'], a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+button:disabled { cursor: not-allowed; filter: none; opacity: .58; transform: none; }
+textarea { font: inherit; }
+a:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent), transparent 70%); outline-offset: 3px; }
+::selection { color: var(--ink); background: color-mix(in srgb, var(--accent), transparent 72%); }
+
+@media (hover: none), (pointer: coarse) {
+  button:hover, .dashboard-shell button:hover, .landing-login:hover, .landing-signup:hover { filter: none; transform: none; }
+}
+
+.calendar-content { will-change: auto; }
+.calendar-content.motion-forward, .calendar-content.motion-backward, .calendar-content.motion-fade { will-change: transform, opacity; }
+.landing-benefits, .feature-showcase, .landing-steps, .landing-help { content-visibility: auto; contain-intrinsic-size: auto 700px; }
+.landing-page .reveal { transition-duration: 720ms; }
+.landing-page .benefits-heading { transition-duration: 800ms; }
+.landing-page .benefit-reveal.is-visible, .landing-page .benefit-reveal.is-visible article { animation-duration: 900ms; }
+.landing-page .hero-copy, .landing-page .landing-preview { animation-duration: 780ms; }
+.landing-page .landing-preview .preview-grid article { animation-duration: 700ms; }
+.loading-screen .brand-mark { animation: loading-breathe 900ms ease-in-out infinite alternate; }
+@keyframes loading-breathe { to { transform: scale(1.06); box-shadow: 0 10px 28px color-mix(in srgb, var(--accent), transparent 52%); } }
+
+@media (max-width: 680px) {
+  :root { --mobile-header-height: calc(60px + env(safe-area-inset-top)); }
+  .dashboard-shell, .dashboard-workspace, .home-overview, .home-welcome, .home-welcome > div, .home-main-grid, .home-panel { min-width: 0; max-width: 100%; }
+  .dashboard-header { min-height: var(--mobile-header-height); padding-top: max(8px, env(safe-area-inset-top)); }
+  .calendar-card { overflow: visible; }
+  .calendar-toolbar { top: var(--mobile-header-height); }
+  .home-welcome { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+  .home-welcome h1 { overflow-wrap: anywhere; }
+  .home-welcome > .primary-button { white-space: nowrap; }
+  .home-panel > header > * { min-width: 0; }
+  .home-panel > header > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .home-panel > header button { flex: none; min-height: 40px; }
+  .calendar-controls { grid-template-columns: 44px minmax(0, 1fr) 44px; }
+  .arrow-button, .icon-button, .prompt-dismiss { width: 44px; height: 44px; }
+  .profile-stack { min-width: 44px; min-height: 44px; align-items: center; justify-content: flex-end; }
+  .filter-chip { min-height: 36px; }
+  .modal-backdrop { align-items: end; padding: max(10px, env(safe-area-inset-top)) 0 0; overscroll-behavior: contain; }
+  .modal { width: 100%; max-height: calc(100dvh - max(10px, env(safe-area-inset-top))); border-radius: 22px 22px 0 0; padding: 18px 16px max(18px, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  .sidekick-panel { top: max(8px, env(safe-area-inset-top)); height: calc(100dvh - 84px - env(safe-area-inset-top)); max-height: calc(100dvh - 84px - env(safe-area-inset-top)); }
+  .sidekick-fab { display: none; }
+}
+
+@media (max-width: 430px) {
+  .home-welcome { align-items: stretch; grid-template-columns: 1fr; }
+  .home-welcome > .primary-button { justify-self: start; }
+  .home-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .calendar-content, .loading-screen .brand-mark { will-change: auto; }
+}

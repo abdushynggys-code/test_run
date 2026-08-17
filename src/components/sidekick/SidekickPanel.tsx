@@ -27,9 +27,22 @@ export function SidekickPanel(props: Props) {
   const [photoPreview, setPhotoPreview] = useState('');
   const messagesRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const voice = useVoiceInput((text) => setInput(text));
 
-  useEffect(() => { const container = messagesRef.current; if (open && container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }, [loading, messages, open, pending]);
+  useEffect(() => {
+    const container = messagesRef.current;
+    if (open && container) container.scrollTo({ top: container.scrollHeight, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, [loading, messages, open, pending]);
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', closeOnEscape); };
+  }, [onClose, open]);
   useEffect(() => {
     if (!photo) { setPhotoPreview(''); return; }
     const url = URL.createObjectURL(photo); setPhotoPreview(url);
@@ -55,9 +68,9 @@ export function SidekickPanel(props: Props) {
   };
 
   return createPortal(<>{open && <button className="sidekick-backdrop" onClick={onClose} aria-label="Close Sidekick" />}
-    <aside className={`sidekick-panel ${open ? 'open' : ''}`} aria-hidden={!open}>
+    <aside className={`sidekick-panel ${open ? 'open' : ''}`} role="dialog" aria-modal={open ? 'true' : undefined} aria-label="Sidekick assistant" aria-hidden={!open}>
       <header><div className="sidekick-orb">✦</div><div><strong>Sidekick</strong><small>Gemini 2.5 Flash · voice & photos</small></div><button className="icon-button" onClick={onClose} aria-label="Close Sidekick">×</button></header>
-      <div className="sidekick-messages" ref={messagesRef}>{messages.map((message, index) => <p className={message.role} key={`${message.role}-${index}`}>{message.text}</p>)}{loading && <p className="assistant sidekick-thinking">Looking and thinking<span>…</span></p>}</div>
+      <div className="sidekick-messages" ref={messagesRef} role="log" aria-live="polite" aria-busy={loading}>{messages.map((message, index) => <p className={message.role} key={`${message.role}-${index}`}>{message.text}</p>)}{loading && <p className="assistant sidekick-thinking">Looking and thinking<span>…</span></p>}</div>
       <SidekickActionCard action={pending} onDismiss={() => setPending({ type: 'none' })} onApply={() => { onApply(pending); setPending({ type: 'none' }); setMessages((current) => [...current, { role: 'assistant', text: 'Done — your family board is updated.' }]); }} />
       <div className="sidekick-suggestions">{suggestions.map((suggestion, index) => <button key={suggestion} onClick={() => index === 0 ? photoRef.current?.click() : void send(suggestion)}>{suggestion}</button>)}</div>
       <form className="sidekick-compose" onSubmit={(event) => { event.preventDefault(); void send(); }}>
@@ -65,8 +78,8 @@ export function SidekickPanel(props: Props) {
         <button type="button" className="photo-button" onClick={() => photoRef.current?.click()} aria-label="Add a room photo">📷</button>
         <input ref={photoRef} className="sidekick-file-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(event) => setPhoto(event.target.files?.[0])} />
         <button type="button" className={`voice-button ${voice.listening ? 'listening' : ''}`} disabled={!voice.supported} onClick={voice.toggle} aria-label={voice.listening ? 'Stop listening' : 'Speak to Sidekick'}>{voice.listening ? '●' : '🎙'}</button>
-        <input value={input} onChange={(event) => setInput(event.target.value)} placeholder={voice.listening ? 'Listening…' : 'Ask Sidekick anything…'} />
-        <button className="sidekick-send" disabled={(!input.trim() && !photo) || loading} aria-label="Send">➜</button>
+        <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} aria-label="Message to Sidekick" placeholder={voice.listening ? 'Listening…' : 'Ask Sidekick anything…'} />
+        <button type="submit" className="sidekick-send" disabled={(!input.trim() && !photo) || loading} aria-label="Send">➜</button>
       </form>
     </aside>
   </>, document.body);

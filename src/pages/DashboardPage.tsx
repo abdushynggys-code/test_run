@@ -77,7 +77,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const animate = (nextMotion: 'forward' | 'backward' | 'fade') => { setMotion(nextMotion); setMotionKey((key) => key + 1); };
   const transitionCalendar = (nextMotion: 'forward' | 'backward' | 'fade', update: () => void) => {
     const transition = document.startViewTransition;
-    if (!transition) { animate(nextMotion); update(); return; }
+    if (!transition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { animate(nextMotion); update(); return; }
     document.documentElement.dataset.calendarMotion = nextMotion;
     const running = transition.call(document, () => flushSync(() => { animate(nextMotion); update(); }));
     void running.finished.finally(() => { delete document.documentElement.dataset.calendarMotion; });
