@@ -10,6 +10,7 @@ export interface WeatherSnapshot {
 export interface WeatherDay { date: string; high: number; low: number; icon: string }
 
 interface GeocodingResponse { results?: Array<{ latitude: number; longitude: number }> }
+export interface WeatherCoordinates { latitude: number; longitude: number }
 interface ForecastResponse {
   current?: { temperature_2m?: number; weather_code?: number };
   daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[]; temperature_2m_min?: number[] };
@@ -25,11 +26,14 @@ const weatherLabel = (code: number) => {
   return ['Stormy', '⛈️'];
 };
 
-export async function loadWeather(location: string, unit: 'c' | 'f'): Promise<WeatherSnapshot> {
-  const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en`;
-  const geoResponse = await fetch(geoUrl);
-  const geo = await geoResponse.json() as GeocodingResponse;
-  const place = geo.results?.[0];
+export async function loadWeather(location: string, unit: 'c' | 'f', coordinates?: WeatherCoordinates): Promise<WeatherSnapshot> {
+  let place = coordinates;
+  if (!place) {
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en`;
+    const geoResponse = await fetch(geoUrl);
+    const geo = await geoResponse.json() as GeocodingResponse;
+    place = geo.results?.[0];
+  }
   if (!place) throw new Error('Location not found');
 
   const temperatureUnit = unit === 'f' ? '&temperature_unit=fahrenheit' : '';

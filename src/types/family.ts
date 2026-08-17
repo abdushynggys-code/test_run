@@ -84,6 +84,8 @@ export interface FamilySettings {
   first_day_of_week: 0 | 1;
   temperature_unit: 'c' | 'f';
   weather_location: string;
+  weather_latitude: number | null;
+  weather_longitude: number | null;
 }
 
 export interface DashboardData {

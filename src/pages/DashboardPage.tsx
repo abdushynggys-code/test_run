@@ -14,6 +14,7 @@ import { MonthCalendar } from '../components/calendar/MonthCalendar';
 import { WeekCalendar } from '../components/calendar/WeekCalendar';
 import { DayCalendar } from '../components/calendar/DayCalendar';
 import { ChoreProgressPanel } from '../components/dashboard/ChoreProgressPanel';
+import { WeatherLocationPrompt } from '../components/dashboard/WeatherLocationPrompt';
 import { FamilyPopover } from '../components/family/FamilyPopover';
 import { SettingsPanel } from '../components/settings/SettingsPanel';
 import { Modal } from '../components/ui/Modal';
@@ -51,7 +52,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   });
   const data = dashboard.data;
   const view = section === 'home' ? homeView : calendarView;
-  const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c');
+  const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c', data?.settings.weather_latitude ?? null, data?.settings.weather_longitude ?? null);
 
   useEffect(() => { if (data) { setHomeView(data.settings.home_view); setCalendarView(data.settings.calendar_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
 
@@ -102,6 +103,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     <DashboardNav active={section} onSection={changeSection} onSidekick={() => setShowSidekick(true)} onSettings={() => setShowSettings(true)} />
     <div className="dashboard-workspace">
     <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} weather={weather} isDemo={isDemo} onFamily={() => setShowFamily(!showFamily)} onSidekick={() => setShowSidekick(true)} />
+    <WeatherLocationPrompt settings={data.settings} onSave={saveSettings} />
     {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
     {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={saveSettings} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
