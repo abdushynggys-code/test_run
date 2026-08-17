@@ -23,3 +23,46 @@
 
 /* Public pages use a slower, cozy 1.5 second rhythm. */
 .reveal { transition-duration: 1.5s; }.benefits-heading { transition-duration: 1.5s; }.benefit-reveal.is-visible, .benefit-reveal.is-visible article { animation-duration: 1.5s; }.hero-copy, .landing-preview { animation-duration: 1.5s; }.landing-preview .preview-grid article { animation: cozy-calendar-cell 1.5s cubic-bezier(.22,1,.36,1) both; }.landing-preview .preview-grid article:nth-child(2) { animation-delay: 100ms; }.landing-preview .preview-grid article:nth-child(3) { animation-delay: 200ms; }.landing-preview .preview-grid article:nth-child(4) { animation-delay: 300ms; }.landing-preview .preview-grid article:nth-child(5) { animation-delay: 400ms; } @keyframes cozy-calendar-cell { from { opacity: 0; transform: translateY(18px) scale(.96); } 65% { transform: translateY(-3px) scale(1.01); } to { opacity: 1; transform: none; } }
+
+/* Phone landing page: everything stays inside the viewport and remains easy to tap. */
+@media (max-width: 560px) {
+  .landing-page { overflow-x: clip; }
+  .landing-page::before, .landing-page::after { display: none; }
+  .landing-header { width: calc(100% - 24px); min-height: 64px; gap: 10px; }
+  .landing-header nav { flex: none; gap: 6px; }
+  .landing-header .landing-login, .landing-header .landing-signup { min-height: 42px; padding: 8px 11px; }
+  .landing-hero, .landing-benefits, .landing-steps, .landing-help, .feature-showcase, .landing-footer { width: calc(100% - 28px); max-width: 100%; }
+  .landing-hero { gap: 42px; padding: 42px 0 58px; }
+  .landing-hero > *, .landing-help > *, .feature-showcase article > * { min-width: 0; max-width: 100%; }
+  .hero-copy h1 { max-width: 100%; margin: 12px 0 17px; font-size: clamp(36px, 11vw, 44px); line-height: 1; letter-spacing: -.045em; }
+  .hero-copy h1 em { display: block; }
+  .hero-copy > p:not(.eyebrow) { max-width: 100%; font-size: 15px; line-height: 1.55; overflow-wrap: anywhere; }
+  .hero-actions { width: 100%; margin-top: 22px; }
+  .hero-actions a { width: 100%; }
+  .landing-preview { width: 100%; min-width: 0; padding: 13px; box-shadow: 7px 8px 0 color-mix(in srgb, var(--sand), transparent 35%), 0 18px 40px rgba(62,52,40,.1); }
+  .landing-preview > header { gap: 10px; }
+  .landing-preview header > span { flex: none; }
+  .preview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; overflow: hidden; }
+  .preview-grid article { min-width: 0; min-height: 150px; padding: 9px 5px; }
+  .preview-grid article:nth-child(n + 4) { display: none; }
+  .preview-grid b { margin-bottom: 18px; }
+  .preview-grid span { overflow: hidden; padding: 6px 5px; overflow-wrap: anywhere; }
+  .landing-preview footer { display: grid; grid-template-columns: 1fr 1fr; }
+  .landing-preview footer span { min-width: 0; overflow-wrap: anywhere; }
+  .landing-benefits, .landing-steps { padding: 68px 0; }
+  .landing-benefits > h2, .landing-steps > h2, .landing-help h2, .feature-showcase h2 { font-size: clamp(30px, 9vw, 39px); overflow-wrap: anywhere; }
+  .landing-benefits article { padding: 18px; }
+  .feature-showcase { padding-bottom: 45px; }
+  .feature-showcase article { min-height: 0; gap: 22px; padding: 52px 0; }
+  .feature-visual { width: 100%; min-height: 180px; padding: 15px; box-shadow: 6px 7px 0 color-mix(in srgb, var(--sand), transparent 62%), 0 14px 30px rgba(62,52,40,.08); }
+  .view-demo, .task-demo { min-width: 0; max-width: 100%; }
+  .landing-help { padding: 58px 0; }
+  .help-actions a { width: 100%; min-height: 44px; }
+  .landing-footer { min-height: 76px; gap: 10px; }
+}
+
+@media (max-width: 350px) {
+  .landing-header { width: calc(100% - 18px); }
+  .landing-header .landing-login, .landing-header .landing-signup { padding-inline: 9px; font-size: 11px; }
+  .hero-copy h1 { font-size: 35px; }
+}
