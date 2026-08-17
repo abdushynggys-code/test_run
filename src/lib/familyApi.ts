@@ -35,7 +35,8 @@ export const familyApi = {
   addTodo: (familyId: string, userId: string, value: CreateTodo) => insertRow('todos', { ...value, family_id: familyId, created_by: userId, completed: false }),
   addMember: (familyId: string, value: CreateMember) => insertRow('family_members', { ...value, family_id: familyId, active: true }),
   async toggle(table: 'todos' | 'reminders', id: string, completed: boolean) {
-    const { error } = await supabase.from(table).update({ completed }).eq('id', id);
+    const value = table === 'todos' ? { completed, completed_at: completed ? new Date().toISOString() : null } : { completed };
+    const { error } = await supabase.from(table).update(value).eq('id', id);
     if (error) throw error;
   },
   async remove(table: 'events' | 'todos' | 'reminders', id: string) {
@@ -51,6 +52,15 @@ export const familyApi = {
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const path = `${userId}/${crypto.randomUUID()}.${extension}`;
     const { error } = await supabase.storage.from('family-avatars').upload(path, file, { contentType: file.type });
+    if (error) throw error;
+    return path;
+  },
+  async uploadRoomPhoto(userId: string, file: File) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP room photo.');
+    if (file.size > 8 * 1024 * 1024) throw new Error('Room photo must be smaller than 8 MB.');
+    const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+    const path = `${userId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
+    const { error } = await supabase.storage.from('room-photos').upload(path, file, { contentType: file.type });
     if (error) throw error;
     return path;
   },

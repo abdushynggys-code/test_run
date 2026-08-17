@@ -23,7 +23,7 @@ Deno.serve(async (request) => {
   if (request.method !== 'POST') return json({ error: 'Use a POST request.' }, 405);
 
   try {
-    const body = await request.json() as { prompt?: unknown; system?: unknown; json?: unknown };
+    const body = await request.json() as { prompt?: unknown; system?: unknown; json?: unknown; image?: { mimeType?: unknown; data?: unknown } };
     if (!GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY is not configured');
       const message = 'Sidekick is installed, but its Gemini key has not been connected yet. Add GEMINI_API_KEY to activate AI answers.';
@@ -35,8 +35,11 @@ Deno.serve(async (request) => {
 
     const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
     const system = typeof body.system === 'string' ? body.system.trim() : '';
+    const mimeType = typeof body.image?.mimeType === 'string' ? body.image.mimeType : '';
+    const imageData = typeof body.image?.data === 'string' ? body.image.data : '';
     if (!prompt) return json({ error: 'Write a message for Sidekick.' }, 400);
     if (prompt.length > 20_000 || system.length > 6_000) return json({ error: 'The request is too long.' }, 400);
+    if (imageData && (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType) || imageData.length > 8_000_000)) return json({ error: 'The room photo is too large or unsupported.' }, 400);
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
@@ -45,7 +48,7 @@ Deno.serve(async (request) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           systemInstruction: system ? { parts: [{ text: system }] } : undefined,
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [{ parts: [...(imageData ? [{ inlineData: { mimeType, data: imageData } }] : []), { text: prompt }] }],
           generationConfig: body.json === true ? { responseMimeType: 'application/json' } : undefined,
         }),
       },

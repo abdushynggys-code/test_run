@@ -27,7 +27,7 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
     data, error, refresh,
     addEvent: (value: CreateEvent) => data && run(() => familyApi.addEvent(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, events: [...current.events, { ...value, id: id(), family_id: current.family.id }] })),
     addReminder: (value: CreateReminder) => data && run(() => familyApi.addReminder(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, reminders: [...current.reminders, { ...value, id: id(), family_id: current.family.id, completed: false }] })),
-    addTodo: (value: CreateTodo) => data && run(() => familyApi.addTodo(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, todos: [...current.todos, { ...value, id: id(), family_id: current.family.id, completed: false }] })),
+    addTodo: (value: CreateTodo) => data && run(() => familyApi.addTodo(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, todos: [...current.todos, { ...value, id: id(), family_id: current.family.id, completed: false, completed_at: null }] })),
     addMember: (value: CreateMember, file?: File) => data && run(async () => {
       const avatarUrl = file ? await familyApi.uploadAvatar(session?.user.id ?? '', file) : null;
       await familyApi.addMember(data.family.id, { ...value, avatar_url: avatarUrl });
@@ -39,8 +39,13 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
     updateMemberColor: (memberId: string, color: string) => run(() => familyApi.updateMemberColor(memberId, color), (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, color } : member) })),
     updateMemberName: (memberId: string, name: string) => run(() => familyApi.updateMemberName(memberId, name), (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, name, emoji: name.slice(0, 1).toUpperCase() } : member) })),
     removeMember: (memberId: string) => run(() => familyApi.deactivateMember(memberId), (current) => ({ ...current, members: current.members.filter((member) => member.id !== memberId) })),
-    toggleItem: (table: 'todos' | 'reminders', itemId: string, completed: boolean) => run(() => familyApi.toggle(table, itemId, completed), (current) => ({ ...current, [table]: current[table].map((item) => item.id === itemId ? { ...item, completed } : item) })),
+    toggleItem: (table: 'todos' | 'reminders', itemId: string, completed: boolean) => run(() => familyApi.toggle(table, itemId, completed), (current) => ({ ...current, [table]: current[table].map((item) => item.id === itemId ? { ...item, completed, ...(table === 'todos' ? { completed_at: completed ? new Date().toISOString() : null } : {}) } : item) })),
     removeItem: (table: 'events' | 'todos' | 'reminders', itemId: string) => run(() => familyApi.remove(table, itemId), (current) => ({ ...current, [table]: current[table].filter((item) => item.id !== itemId) })),
     saveSettings: (value: Partial<FamilySettings>) => data && run(() => familyApi.saveSettings(data.family.id, value), (current) => ({ ...current, settings: { ...current.settings, ...value } })),
+    uploadRoomPhoto: async (file: File) => {
+      if (isDemo) return;
+      if (!session) throw new Error('Sign in to upload a room photo.');
+      await familyApi.uploadRoomPhoto(session.user.id, file);
+    },
   };
 }

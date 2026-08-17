@@ -26,9 +26,10 @@ export const demoData: DashboardData = {
     { id: 'r2', family_id: 'demo-family', title: 'Trash night', description: '', reminder_time: at(1, '19:00'), family_member_id: 'dad', priority: 'medium', repeat_rule: 'weekly', completed: false },
   ],
   todos: [
-    { id: 't1', family_id: 'demo-family', title: 'Buy groceries', description: '', family_member_id: 'mom', due_date: toDateKey(now), priority: 'high', star_value: 3, completed: false },
-    { id: 't2', family_id: 'demo-family', title: 'Pick up Emma', description: '', family_member_id: 'dad', due_date: toDateKey(now), priority: 'medium', star_value: 2, completed: false },
-    { id: 't3', family_id: 'demo-family', title: 'Pay electricity', description: '', family_member_id: 'family', due_date: toDateKey(now), priority: 'low', star_value: 1, completed: true },
+    { id: 't1', family_id: 'demo-family', title: 'Tidy the reading corner', description: '', family_member_id: 'emma', due_date: toDateKey(now), priority: 'high', star_value: 3, completed: false, completed_at: null },
+    { id: 't2', family_id: 'demo-family', title: 'Put away the games', description: '', family_member_id: 'noah', due_date: toDateKey(now), priority: 'medium', star_value: 2, completed: false, completed_at: null },
+    { id: 't3', family_id: 'demo-family', title: 'Water the plants', description: '', family_member_id: 'emma', due_date: toDateKey(now), priority: 'low', star_value: 2, completed: true, completed_at: now.toISOString() },
+    { id: 't4', family_id: 'demo-family', title: 'Make the beds', description: '', family_member_id: 'noah', due_date: toDateKey(now), priority: 'medium', star_value: 3, completed: true, completed_at: now.toISOString() },
   ],
-  settings: { id: 'demo-settings', family_id: 'demo-family', mode: 'light', accent_color: DEFAULT_PALETTE.primary, palette: DEFAULT_PALETTE, saved_palettes: [], default_view: 'week', home_view: 'week', calendar_view: 'month', first_day_of_week: 1, temperature_unit: 'c', weather_location: 'Almaty', weather_latitude: null, weather_longitude: null },
+  settings: { id: 'demo-settings', family_id: 'demo-family', mode: 'light', accent_color: DEFAULT_PALETTE.primary, palette: DEFAULT_PALETTE, saved_palettes: [], default_view: 'week', home_view: 'week', calendar_view: 'month', first_day_of_week: 1, temperature_unit: 'c', weather_location: 'Almaty', weather_latitude: null, weather_longitude: null, leaderboard_include_adults: false, tutorial_completed: true },
 };

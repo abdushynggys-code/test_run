@@ -1,6 +1,7 @@
 import type { CalendarEvent, FamilyMember, Todo } from '../../types/family';
 import type { WeatherSnapshot } from '../../lib/weather';
 import { formatTime, toDateKey } from '../../lib/date';
+import { DailyLeaderboard } from '../rewards/DailyLeaderboard';
 
 interface Props {
   events: CalendarEvent[];
@@ -13,13 +14,15 @@ interface Props {
   onAddEvent: () => void;
   onToggleTodo: (todo: Todo) => void;
   onEvent: (event: CalendarEvent) => void;
+  includeAdults: boolean;
+  onProfiles: () => void;
 }
 
 const dayLabel = (value: string) => new Intl.DateTimeFormat('en', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(value));
 const taskDate = (value: string | null) => value ? new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(`${value}T12:00:00`)) : 'No due date';
 
 export function HomeOverview(props: Props) {
-  const { events, todos, members, weather, weatherLocation, onCalendar, onTasks, onAddEvent, onToggleTodo, onEvent } = props;
+  const { events, todos, members, weather, weatherLocation, onCalendar, onTasks, onAddEvent, onToggleTodo, onEvent, includeAdults, onProfiles } = props;
   const now = new Date();
   const today = toDateKey(now);
   const upcoming = events.filter((event) => new Date(event.end_time) >= now).sort((a, b) => a.start_time.localeCompare(b.start_time)).slice(0, 6);
@@ -41,6 +44,7 @@ export function HomeOverview(props: Props) {
       <header><div><p className="eyebrow">WEATHER</p><h2>Next 7 days</h2></div><span>{weather?.label ?? 'Loading forecast…'}</span></header>
       <div className="weather-forecast-row">{weather?.forecast.slice(0, 7).map((day, index) => <article className={index === 0 ? 'today' : ''} key={day.date}><small>{index === 0 ? 'Today' : new Intl.DateTimeFormat('en', { weekday: 'short' }).format(new Date(`${day.date}T12:00:00`))}</small><b>{day.icon}</b><strong>{day.high}° <span>{day.low}°</span></strong></article>) ?? <p>Weather will appear here.</p>}</div>
     </section>
+    <DailyLeaderboard members={members} todos={todos} includeAdults={includeAdults} onProfiles={onProfiles} />
     <div className="home-main-grid">
       <section className="home-panel upcoming-panel"><header><div><p className="eyebrow">CALENDAR</p><h2>Coming up</h2></div><button onClick={onCalendar}>View calendar</button></header>
         <div className="home-list">{upcoming.map((event) => { const member = members.find((item) => item.id === event.family_member_id); return <button key={event.id} onClick={() => onEvent(event)}><i style={{ background: event.color ?? member?.color ?? 'var(--accent)' }} /><time><strong>{dayLabel(event.start_time)}</strong><small>{event.all_day ? 'All day' : formatTime(event.start_time)}</small></time><span><strong>{event.title}</strong><small>{member?.name ?? 'Family'}{event.location ? ` · ${event.location}` : ''}</small></span><b>›</b></button>; })}{!upcoming.length && <p className="home-empty">Nothing scheduled yet.</p>}</div>

@@ -69,6 +69,7 @@ export interface Todo {
   priority: Priority;
   star_value: number;
   completed: boolean;
+  completed_at: string | null;
 }
 
 export interface FamilySettings {
@@ -86,6 +87,8 @@ export interface FamilySettings {
   weather_location: string;
   weather_latitude: number | null;
   weather_longitude: number | null;
+  leaderboard_include_adults: boolean;
+  tutorial_completed: boolean;
 }
 
 export interface DashboardData {
@@ -99,5 +102,5 @@ export interface DashboardData {
 
 export type CreateEvent = Omit<CalendarEvent, 'id' | 'family_id'>;
 export type CreateReminder = Omit<Reminder, 'id' | 'family_id' | 'completed'>;
-export type CreateTodo = Omit<Todo, 'id' | 'family_id' | 'completed'>;
+export type CreateTodo = Omit<Todo, 'id' | 'family_id' | 'completed' | 'completed_at'>;
 export type CreateMember = Pick<FamilyMember, 'name' | 'color' | 'emoji' | 'member_type'> & { avatar_url?: string | null };
