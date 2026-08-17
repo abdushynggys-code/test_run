@@ -31,6 +31,14 @@
 .week-add-event { min-height: 42px; border: 0; border-top: 1px solid var(--line); color: var(--accent); background: transparent; font-size: 10px; font-weight: 850; }
 
 @media (max-width: 680px) {
-  .week-board { grid-template-columns: repeat(7, 154px); min-width: 1078px; }
-  .week-day-list { max-height: calc(100dvh - 380px); }
+  .week-board-scroll { overflow: visible; padding: 8px; background: #eef2f6; }
+  .week-board { grid-template-columns: 1fr; gap: 8px; min-width: 0; min-height: 0; }
+  .week-day { grid-template-rows: auto auto auto; overflow: hidden; border: 1px solid var(--line); border-radius: 15px; }
+  .week-day > header { min-height: 58px; padding: 8px 11px; }
+  .week-day > header > div strong { width: 31px; height: 31px; font-size: 16px; }
+  .week-day-list { max-height: none; overflow: visible; padding: 8px; }
+  .week-event-card { min-height: 62px; }
+  .week-event-card.reminder { min-height: 58px; }
+  .week-empty { margin: 0; padding: 13px 4px; }
+  .week-add-event { min-height: 40px; }
 }

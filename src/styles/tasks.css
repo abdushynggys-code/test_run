@@ -48,9 +48,12 @@
 @media (max-width: 680px) {
   .tasks-board { min-height: calc(100dvh - 145px); margin: 0; border-radius: 0; padding: 18px 12px; }
   .tasks-board-header h1 { font-size: 27px; }
-  .tasks-board-header { align-items: flex-end; }
+  .tasks-board-header { align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+  .tasks-board-actions { margin-left: auto; }
   .task-filter-button { display: none; }
-  .task-summary-row { grid-template-columns: repeat(3, 1fr); }
+  .task-summary-row { grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 14px 0; }
   .task-summary-row article { display: grid; justify-items: center; padding: 9px 4px; text-align: center; }
+  .task-summary-row article > span { width: 30px; height: 30px; }
+  .task-summary-row strong { font-size: 16px; }
   .task-member-grid { grid-template-columns: 1fr; }
 }
