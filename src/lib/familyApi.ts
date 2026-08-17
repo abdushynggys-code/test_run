@@ -29,6 +29,19 @@ async function insertRow(table: string, value: Record<string, unknown>) {
   if (error) throw error;
 }
 
+async function clearStorageFolder(bucket: string, path: string): Promise<void> {
+  const storage = supabase.storage.from(bucket);
+  const { data, error } = await storage.list(path, { limit: 1000 });
+  if (error) throw error;
+  const files = data.filter((item) => item.id).map((item) => `${path}/${item.name}`);
+  const folders = data.filter((item) => !item.id);
+  if (files.length) {
+    const result = await storage.remove(files);
+    if (result.error) throw result.error;
+  }
+  await Promise.all(folders.map((folder) => clearStorageFolder(bucket, `${path}/${folder.name}`)));
+}
+
 export const familyApi = {
   addEvent: (familyId: string, userId: string, value: CreateEvent) => insertRow('events', { ...value, family_id: familyId, created_by: userId }),
   addReminder: (familyId: string, userId: string, value: CreateReminder) => insertRow('reminders', { ...value, family_id: familyId, created_by: userId, completed: false }),
@@ -83,5 +96,13 @@ export const familyApi = {
   async saveSettings(familyId: string, value: Partial<FamilySettings>) {
     const { error } = await supabase.from('family_settings').update(value).eq('family_id', familyId);
     if (error) throw error;
+  },
+  async factoryReset(familyId: string, userId: string) {
+    const { error } = await supabase.rpc('factory_reset_family', { target_family: familyId });
+    if (error) throw error;
+    await Promise.allSettled([
+      clearStorageFolder('family-avatars', userId),
+      clearStorageFolder('room-photos', userId),
+    ]);
   },
 };

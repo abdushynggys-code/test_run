@@ -23,6 +23,12 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
   }
 
   const id = () => crypto.randomUUID();
+  const factoryReset = async () => {
+    if (!data) return;
+    if (isDemo) { setData(demoData); return; }
+    try { await familyApi.factoryReset(data.family.id, session?.user.id ?? ''); await refresh(); setError(''); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not reset Kinboard.'); throw reason; }
+  };
   return {
     data, error, refresh,
     addEvent: (value: CreateEvent) => data && run(() => familyApi.addEvent(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, events: [...current.events, { ...value, id: id(), family_id: current.family.id }] })),
@@ -43,6 +49,7 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
     toggleItem: (table: 'todos' | 'reminders', itemId: string, completed: boolean) => run(() => familyApi.toggle(table, itemId, completed), (current) => ({ ...current, [table]: current[table].map((item) => item.id === itemId ? { ...item, completed, ...(table === 'todos' ? { completed_at: completed ? new Date().toISOString() : null } : {}) } : item) })),
     removeItem: (table: 'events' | 'todos' | 'reminders', itemId: string) => run(() => familyApi.remove(table, itemId), (current) => ({ ...current, [table]: current[table].filter((item) => item.id !== itemId) })),
     saveSettings: (value: Partial<FamilySettings>) => data && run(() => familyApi.saveSettings(data.family.id, value), (current) => ({ ...current, settings: { ...current.settings, ...value } })),
+    factoryReset,
     uploadRoomPhoto: async (file: File) => {
       if (isDemo) return;
       if (!session) throw new Error('Sign in to upload a room photo.');

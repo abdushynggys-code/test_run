@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CalendarView, FamilySettings } from '../../types/family';
 import { supabase } from '../../lib/supabase';
 import { getDeviceCoordinates } from '../../lib/geolocation';
+import { FactoryResetControl } from './FactoryResetControl';
 
 interface Props {
   settings: FamilySettings;
@@ -9,9 +10,10 @@ interface Props {
   onSave: (value: Partial<FamilySettings>) => void;
   onClose: () => void;
   onTutorial: () => void;
+  onFactoryReset: () => Promise<void>;
 }
 
-export function SettingsPanel({ settings, isDemo, onSave, onClose, onTutorial }: Props) {
+export function SettingsPanel({ settings, isDemo, onSave, onClose, onTutorial, onFactoryReset }: Props) {
   const [location, setLocation] = useState(settings.weather_location);
   const [locating, setLocating] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
@@ -47,6 +49,7 @@ export function SettingsPanel({ settings, isDemo, onSave, onClose, onTutorial }:
     </section>
     <section><h3>Help</h3><button className="location-button" onClick={onTutorial}>Show the quick tutorial again</button></section>
     <section className="settings-about"><h3>Display style</h3><p>Kinboard uses one calm, high-contrast family display theme so it is easy to read from across the room.</p><p><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Weather data by Open-Meteo</a></p></section>
+    <section className="settings-danger"><h3>Danger zone</h3><p>Return Kinboard to its original empty setup.</p><FactoryResetControl isDemo={isDemo} onReset={onFactoryReset} /></section>
     {!isDemo && <button className="logout-button" onClick={() => void supabase.auth.signOut()}>Sign out</button>}
     {isDemo && <p className="demo-note">Demo changes reset when this page refreshes.</p>}
   </aside>;
