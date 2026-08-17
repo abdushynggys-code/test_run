@@ -67,6 +67,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const visibleReminders = useMemo(() => data?.reminders.filter((item) => calendarOwner ? item.family_member_id === calendarOwner : !item.family_member_id || selected.has(item.family_member_id)) ?? [], [calendarOwner, data?.reminders, selected]);
   const ranks = useMemo(() => data ? dailyLeaderboard(data.members, data.todos, data.settings.leaderboard_include_adults) : [], [data]);
   const winnerIds = useMemo(() => new Set(ranks.filter((rank) => rank.isWinner).map((rank) => rank.member.id)), [ranks]);
+  const displayedWinnerIds = useMemo(() => new Set([...winnerIds, ...celebrationWinners.map((rank) => rank.member.id)]), [celebrationWinners, winnerIds]);
   const closeCelebration = useCallback(() => setCelebrationWinners([]), []);
   const changeSection = useCallback((next: DashboardSection) => { setSection(next); if (next === 'home') setDate(new Date()); }, []);
   if (loading) return <main className="loading-screen"><span className="brand-mark">K</span><p>Opening your family dashboard…</p></main>;
@@ -116,9 +117,9 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   return <main className="dashboard-shell">
     <DashboardNav active={section} onSection={changeSection} onSidekick={() => setShowSidekick(true)} onSettings={() => setShowSettings(true)} />
     <div className="dashboard-workspace">
-    <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} weather={weather} isDemo={isDemo} winnerIds={winnerIds} onFamily={() => setShowFamily(!showFamily)} onSidekick={() => setShowSidekick(true)} />
+    <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} weather={weather} isDemo={isDemo} winnerIds={displayedWinnerIds} onFamily={() => setShowFamily(!showFamily)} onSidekick={() => setShowSidekick(true)} />
     {section === 'home' && <WeatherLocationPrompt settings={data.settings} onSave={saveSettings} />}
-    {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} todos={data.todos} winnerIds={winnerIds} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
+    {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} todos={data.todos} winnerIds={displayedWinnerIds} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
     {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={saveSettings} onTutorial={() => { setShowSettings(false); setShowTutorial(true); }} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
     {section === 'home' && <HomeOverview events={data.events} todos={data.todos} members={data.members} weather={weather} weatherLocation={data.settings.weather_location} includeAdults={data.settings.leaderboard_include_adults} onProfiles={() => setShowFamily(true)} onCalendar={() => changeSection('calendar')} onTasks={() => changeSection('tasks')} onAddEvent={() => { setEventRange(null); setDialog('event'); }} onToggleTodo={toggleTodo} onEvent={setActiveEvent} />}

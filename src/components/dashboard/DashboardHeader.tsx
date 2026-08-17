@@ -35,7 +35,7 @@ export function DashboardHeader({ familyName, members, settings, weather, isDemo
       {isDemo && <span className="demo-badge">Demo</span>}
       <button className="sidekick-header-button" onClick={onSidekick}><span>✦</span> Ask Sidekick</button>
       <button className="profile-stack" onClick={onFamily} aria-label={`${familyName} profiles`}>
-        {[...members].sort((left, right) => Number(winnerIds.has(right.id)) - Number(winnerIds.has(left.id))).slice(0, 4).map((member) => <span className={winnerIds.has(member.id) ? 'crowned' : ''} key={member.id} style={{ background: member.color }}>{member.avatar_url ? <img src={member.avatar_url} alt="" /> : member.emoji}</span>)}
+        {[...members].sort((left, right) => Number(winnerIds.has(right.id)) - Number(winnerIds.has(left.id))).slice(0, 4).map((member) => <span className={winnerIds.has(member.id) ? 'crowned' : ''} data-profile-id={member.id} key={member.id} style={{ background: member.color }}>{member.avatar_url ? <img src={member.avatar_url} alt="" /> : member.emoji}</span>)}
       </button>
     </div>
   </header>;
