@@ -30,6 +30,7 @@ import { TaskPassNotice } from '../components/rewards/TaskPassNotice';
 import { OnboardingTour } from '../components/onboarding/OnboardingTour';
 import { toDateKey } from '../lib/date';
 import { taskCompletionRewards } from '../lib/taskCompletionRewards';
+import { playUiSound } from '../lib/sounds';
 type Dialog = 'event' | 'reminder' | 'todo' | null;
 export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const auth = useSession();
@@ -61,7 +62,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c', data?.settings.weather_latitude ?? null, data?.settings.weather_longitude ?? null);
   useEffect(() => { if (data) { setCalendarView(data.settings.calendar_view); setSelected(new Set(data.members.map((member) => member.id))); } }, [data?.family.id]);
   useEffect(() => { if (data && !data.settings.tutorial_completed && tourFamily !== data.family.id) { setTourFamily(data.family.id); setShowTutorial(true); } }, [data, tourFamily]);
-
   const passMembers = useMemo(() => data ? taskPassMembers(data.members) : [], [data]);
   const availableTodos = useMemo(() => data ? todosDuringTaskPass(data.todos, data.members) : [], [data]);
   const visibleEvents = useMemo(() => data?.events.filter((event) => calendarOwner ? event.family_member_id === calendarOwner : !event.family_member_id || selected.has(event.family_member_id)) ?? [], [calendarOwner, data?.events, selected]);
@@ -75,7 +75,6 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   if (loading) return <main className="loading-screen"><span className="brand-mark">K</span><p>Opening your family dashboard…</p></main>;
   if (!isDemo && !session) return <Redirect to="/login" />;
   if (!data) return <main className="loading-screen"><p>{dashboard.error || 'Loading family…'}</p></main>;
-
   const animate = (nextMotion: 'forward' | 'backward' | 'fade') => { setMotion(nextMotion); setMotionKey((key) => key + 1); };
   const transitionCalendar = (nextMotion: 'forward' | 'backward' | 'fade', update: () => void) => {
     const transition = document.startViewTransition;
@@ -104,14 +103,15 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     const completed = !todo.completed;
     if (completed) {
       const rewards = taskCompletionRewards(todo, data.todos, data.members, data.settings.leaderboard_include_adults, winnerIds);
+      if (rewards.newlyCrowned.length || rewards.leveledUp) playUiSound('reward');
       setCelebrationWinners(rewards.newlyCrowned);
       if (rewards.passMember) void dashboard.grantLevel20Pass(rewards.passMember.id, toDateKey(new Date()));
     }
     void dashboard.toggleItem('todos', todo.id, completed);
   };
   const applySidekickAction = (action: SidekickAction) => {
-    if (action.type === 'create_todo' && action.title) void dashboard.addTodo({ title: action.title, description: '', family_member_id: validMember(action.memberId), due_date: action.dueDate, priority: action.priority, star_value: action.starValue });
-    if (action.type === 'create_todos') action.items.forEach((item) => { const memberId = data.members.some((member) => member.id === item.memberId && member.member_type === 'child') ? item.memberId : null; void dashboard.addTodo({ title: item.title, description: 'Suggested from a room photo by Sidekick', family_member_id: memberId, due_date: item.dueDate, priority: item.priority, star_value: item.starValue }); });
+    if (action.type === 'create_todo' && action.title) { playUiSound('click'); void dashboard.addTodo({ title: action.title, description: '', family_member_id: validMember(action.memberId), due_date: action.dueDate, priority: action.priority, star_value: action.starValue }); }
+    if (action.type === 'create_todos') { playUiSound('click'); action.items.forEach((item) => { const memberId = data.members.some((member) => member.id === item.memberId && member.member_type === 'child') ? item.memberId : null; void dashboard.addTodo({ title: item.title, description: 'Suggested from a room photo by Sidekick', family_member_id: memberId, due_date: item.dueDate, priority: item.priority, star_value: item.starValue }); }); }
     if (action.type === 'complete_todo') { const todo = data.todos.find((item) => item.id === action.todoId); if (todo && !todo.completed) toggleTodo(todo); }
     if (action.type === 'delete_todo' && data.todos.some((todo) => todo.id === action.todoId)) void dashboard.removeItem('todos', action.todoId);
     if (action.type === 'delete_event' && data.events.some((event) => event.id === action.eventId)) void dashboard.removeItem('events', action.eventId);
@@ -139,7 +139,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     {section === 'tasks' && <TasksBoard todos={visibleTodos} members={data.members} onToggle={toggleTodo} onAdd={() => setDialog('todo')} />}
     {dialog === 'event' && <Modal title={eventRange ? "Add a multi-day event" : "Add an event"} onClose={() => { setDialog(null); setEventRange(null); }}><EventForm members={data.members} initialDate={eventRange?.start ?? date} initialEndDate={eventRange?.end} initialMemberId={calendarOwner} onCancel={() => { setDialog(null); setEventRange(null); }} onSubmit={(value) => { void dashboard.addEvent(value); setDialog(null); setEventRange(null); }} /></Modal>}
     {dialog === 'reminder' && <Modal title="Add a reminder" onClose={() => setDialog(null)}><ReminderForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addReminder(value); setDialog(null); }} /></Modal>}
-    {dialog === 'todo' && <Modal title="Add a family task" onClose={() => setDialog(null)}><TodoForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { void dashboard.addTodo(value); setDialog(null); }} /></Modal>}
+    {dialog === 'todo' && <Modal title="Add a family task" onClose={() => setDialog(null)}><TodoForm members={data.members} onCancel={() => setDialog(null)} onSubmit={(value) => { playUiSound('click'); void dashboard.addTodo(value); setDialog(null); }} /></Modal>}
     {activeEvent && <Modal title="Event details" onClose={() => setActiveEvent(null)}><EventDetails event={activeEvent} members={data.members} onClose={() => setActiveEvent(null)} onDelete={() => { void dashboard.removeItem('events', activeEvent.id); setActiveEvent(null); }} /></Modal>}
     </div>
     {!showSidekick && <button className="sidekick-fab" onClick={() => setShowSidekick(true)}><span>✦</span><strong>Ask Sidekick</strong><small>Plan with AI</small></button>}

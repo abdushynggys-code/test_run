@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CreateMember, FamilyMember, Todo } from '../../types/family';
 import { PROFILE_COLORS } from '../../lib/themePalettes';
 import { rewardProgress } from '../../lib/rewards';
@@ -24,8 +24,16 @@ export function FamilyPopover(props: Props) {
   const [photo, setPhoto] = useState<File>();
   const [memberType, setMemberType] = useState<FamilyMember['member_type']>('child');
 
-  return <div className="popover family-popover">
-    <header><div><p className="eyebrow">PROFILES</p><h3>Family</h3></div><button className="icon-button" onClick={onClose}>×</button></header>
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener('keydown', closeOnEscape); };
+  }, [onClose]);
+
+  return <div className={`popover family-popover ${adding ? 'adding-profile' : ''}`} role="dialog" aria-modal="true" aria-label="Family profiles">
+    <header><div><p className="eyebrow">PROFILES</p><h3>Family</h3></div><button className="icon-button" onClick={onClose} aria-label="Close profiles">×</button></header>
     <div className="family-scroll"><div className="family-list">{members.map((member) => { const progress = rewardProgress(member.id, todos); return <div className="profile-row" key={member.id}>
       <span className={`profile-avatar ${winnerIds.has(member.id) ? 'crowned' : ''}`} style={{ background: member.color }}>{member.avatar_url ? <img src={member.avatar_url} alt={`${member.name} profile`} /> : member.emoji}</span>
       <div className="profile-reward"><span><strong>{member.name}</strong>{member.member_type === 'child' && <em>Level {progress.level}</em>}</span>
