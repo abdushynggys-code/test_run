@@ -3,7 +3,15 @@ import { supabase } from './supabase';
 import type { CreateEvent, CreateMember, CreateReminder, CreateTodo, DashboardData, Family, FamilyMember, FamilySettings } from '../types/family';
 
 export async function loadDashboard(session: Session): Promise<DashboardData> {
-  const familyResult = await supabase.from('families').select('*').eq('owner_id', session.user.id).single();
+  const profileResult = await supabase.from('profiles').select('active_family_id').eq('id', session.user.id).single();
+  if (profileResult.error) throw profileResult.error;
+  let familyId = profileResult.data.active_family_id as string | null;
+  if (!familyId) {
+    const membership = await supabase.from('family_accounts').select('family_id').eq('user_id', session.user.id).order('joined_at').limit(1).single();
+    if (membership.error) throw membership.error;
+    familyId = membership.data.family_id as string;
+  }
+  const familyResult = await supabase.from('families').select('*').eq('id', familyId).single();
   if (familyResult.error) throw familyResult.error;
   const family = familyResult.data as Family;
   const [members, events, reminders, todos, settings] = await Promise.all([
@@ -60,19 +68,19 @@ export const familyApi = {
     const { error } = await supabase.from('family_members').update({ active: false }).eq('id', id);
     if (error) throw error;
   },
-  async uploadAvatar(userId: string, file: File) {
+  async uploadAvatar(familyId: string, file: File) {
     if (file.size > 5 * 1024 * 1024) throw new Error('Profile image must be smaller than 5 MB.');
     const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+    const path = `${familyId}/${crypto.randomUUID()}.${extension}`;
     const { error } = await supabase.storage.from('family-avatars').upload(path, file, { contentType: file.type });
     if (error) throw error;
     return path;
   },
-  async uploadRoomPhoto(userId: string, file: File) {
+  async uploadRoomPhoto(familyId: string, file: File) {
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP room photo.');
     if (file.size > 8 * 1024 * 1024) throw new Error('Room photo must be smaller than 8 MB.');
     const extension = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-    const path = `${userId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
+    const path = `${familyId}/${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${extension}`;
     const { error } = await supabase.storage.from('room-photos').upload(path, file, { contentType: file.type });
     if (error) throw error;
     return path;
@@ -97,12 +105,33 @@ export const familyApi = {
     const { error } = await supabase.from('family_settings').update(value).eq('family_id', familyId);
     if (error) throw error;
   },
-  async factoryReset(familyId: string, userId: string) {
+  async factoryReset(familyId: string) {
     const { error } = await supabase.rpc('factory_reset_family', { target_family: familyId });
     if (error) throw error;
     await Promise.allSettled([
-      clearStorageFolder('family-avatars', userId),
-      clearStorageFolder('room-photos', userId),
+      clearStorageFolder('family-avatars', familyId),
+      clearStorageFolder('room-photos', familyId),
     ]);
+  },
+  async joinFamily(code: string) {
+    const { error } = await supabase.rpc('join_family_by_code', { code: code.trim().toUpperCase() });
+    if (error) throw error;
+  },
+  async rotateInviteCode(familyId: string) {
+    const { data, error } = await supabase.rpc('rotate_family_join_code', { target_family: familyId });
+    if (error) throw error;
+    if (typeof data !== 'string') throw new Error('The new invite code was not returned.');
+    return data;
+  },
+  subscribe(familyId: string, onChange: () => void) {
+    const filter = `family_id=eq.${familyId}`;
+    const channel = supabase.channel(`family-${familyId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'family_members', filter }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reminders', filter }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'todos', filter }, onChange)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'family_settings', filter }, onChange)
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
   },
 };

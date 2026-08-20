@@ -4,23 +4,17 @@ import { Redirect } from 'wouter';
 import { useSession } from '../hooks/useSession';
 import { useDashboard } from '../hooks/useDashboard';
 import { useWeather } from '../hooks/useWeather';
-import type { CalendarEvent, CalendarView, Todo } from '../types/family';
+import type { CalendarEvent, CalendarView, FamilyMember, Todo } from '../types/family';
 import { DashboardHeader } from '../components/dashboard/DashboardHeader';
-import { DashboardNav, type DashboardSection } from '../components/dashboard/DashboardNav';
+import { DashboardNav } from '../components/dashboard/DashboardNav';
 import { TasksBoard } from '../components/dashboard/TasksBoard';
-import { CalendarToolbar } from '../components/calendar/CalendarToolbar';
-import { MemberFilters } from '../components/calendar/MemberFilters';
-import { MonthCalendar } from '../components/calendar/MonthCalendar';
-import { WeekCalendar } from '../components/calendar/WeekCalendar';
-import { DayCalendar } from '../components/calendar/DayCalendar';
+import { CalendarToolbar, DayCalendar, MemberFilters, MonthCalendar, WeekCalendar } from '../components/calendar';
 import { HomeOverview } from '../components/dashboard/HomeOverview';
 import { WeatherLocationPrompt } from '../components/dashboard/WeatherLocationPrompt';
 import { FamilyPopover } from '../components/family/FamilyPopover';
 import { SettingsPanel } from '../components/settings/SettingsPanel';
 import { Modal } from '../components/ui/Modal';
-import { EventForm } from '../components/forms/EventForm';
-import { ReminderForm } from '../components/forms/ReminderForm';
-import { TodoForm } from '../components/forms/TodoForm';
+import { EventForm, ReminderForm, TodoForm } from '../components/forms';
 import { EventDetails } from '../components/events/EventDetails';
 import { SidekickPanel } from '../components/sidekick/SidekickPanel';
 import type { SidekickAction } from '../lib/sidekick';
@@ -31,6 +25,9 @@ import { OnboardingTour } from '../components/onboarding/OnboardingTour';
 import { toDateKey } from '../lib/date';
 import { taskCompletionRewards } from '../lib/taskCompletionRewards';
 import { playUiSound } from '../lib/sounds';
+import { triggerHaptic } from '../lib/haptics';
+import { LevelUpCelebration } from '../components/rewards/LevelUpCelebration';
+import { useDashboardSection } from '../hooks/useDashboardSection';
 type Dialog = 'event' | 'reminder' | 'todo' | null;
 export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const auth = useSession();
@@ -52,11 +49,10 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tourFamily, setTourFamily] = useState<string | null>(null);
   const [celebrationWinners, setCelebrationWinners] = useState<RewardRank[]>([]);
+  const [levelUp, setLevelUp] = useState<{ member: FamilyMember; level: number } | null>(null);
   const [showSidekick, setShowSidekick] = useState(() => new URLSearchParams(window.location.search).get('sidekick') === 'open');
-  const [section, setSection] = useState<DashboardSection>(() => {
-    const initial = new URLSearchParams(window.location.search).get('section');
-    return initial === 'calendar' || initial === 'tasks' ? initial : 'home';
-  });
+  const resetHomeDate = useCallback(() => setDate(new Date()), []);
+  const { section, changeSection } = useDashboardSection(demoMode, resetHomeDate);
   const data = dashboard.data;
   const view = calendarView;
   const weather = useWeather(data?.settings.weather_location ?? 'Almaty', data?.settings.temperature_unit ?? 'c', data?.settings.weather_latitude ?? null, data?.settings.weather_longitude ?? null);
@@ -71,9 +67,8 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
   const winnerIds = useMemo(() => new Set(ranks.filter((rank) => rank.isWinner).map((rank) => rank.member.id)), [ranks]);
   const displayedWinnerIds = useMemo(() => new Set([...winnerIds, ...celebrationWinners.map((rank) => rank.member.id)]), [celebrationWinners, winnerIds]);
   const closeCelebration = useCallback(() => setCelebrationWinners([]), []);
-  const changeSection = useCallback((next: DashboardSection) => { setSection(next); if (next === 'home') setDate(new Date()); }, []);
   if (loading) return <main className="loading-screen"><span className="brand-mark">K</span><p>Opening your family dashboard…</p></main>;
-  if (!isDemo && !session) return <Redirect to="/login" />;
+  if (!isDemo && !session) return <Redirect to="/" />;
   if (!data) return <main className="loading-screen"><p>{dashboard.error || 'Loading family…'}</p></main>;
   const animate = (nextMotion: 'forward' | 'backward' | 'fade') => { setMotion(nextMotion); setMotionKey((key) => key + 1); };
   const transitionCalendar = (nextMotion: 'forward' | 'backward' | 'fade', update: () => void) => {
@@ -103,8 +98,11 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     const completed = !todo.completed;
     if (completed) {
       const rewards = taskCompletionRewards(todo, data.todos, data.members, data.settings.leaderboard_include_adults, winnerIds);
-      if (rewards.newlyCrowned.length || rewards.leveledUp) playUiSound('reward');
+      if (rewards.newlyCrowned.length || rewards.levelUp) playUiSound('reward');
+      if (rewards.newlyCrowned.length) triggerHaptic('crown');
+      else if (rewards.levelUp) triggerHaptic('level-up');
       setCelebrationWinners(rewards.newlyCrowned);
+      setLevelUp(rewards.levelUp);
       if (rewards.passMember) void dashboard.grantLevel20Pass(rewards.passMember.id, toDateKey(new Date()));
     }
     void dashboard.toggleItem('todos', todo.id, completed);
@@ -122,11 +120,11 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     <div className="dashboard-workspace">
     <DashboardHeader familyName={data.family.name} members={data.members} settings={data.settings} weather={weather} isDemo={isDemo} winnerIds={displayedWinnerIds} onFamily={() => setShowFamily(!showFamily)} onSidekick={() => setShowSidekick(true)} />
     {section === 'home' && <WeatherLocationPrompt settings={data.settings} onSave={saveSettings} />}
-    {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} todos={data.todos} winnerIds={displayedWinnerIds} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onClose={() => setShowFamily(false)} /></>}
+    {showFamily && <><div className="popover-backdrop" onClick={() => setShowFamily(false)} /><FamilyPopover members={data.members} todos={data.todos} winnerIds={displayedWinnerIds} inviteCode={data.family.join_code} currentUserId={session?.user.id ?? null} isDemo={isDemo} onAdd={(value, file) => { void dashboard.addMember(value, file); }} onAvatar={(id, file) => void dashboard.updateMemberAvatar(id, file)} onColor={(id, color) => void dashboard.updateMemberColor(id, color)} onName={(id, name) => void dashboard.updateMemberName(id, name)} onRemove={(id) => void dashboard.removeMember(id)} onJoin={async (code) => { await dashboard.joinFamily(code); setShowFamily(false); }} onRotate={dashboard.rotateInviteCode} onClose={() => setShowFamily(false)} /></>}
     {showSettings && <><div className="drawer-backdrop" onClick={() => setShowSettings(false)} /><SettingsPanel settings={data.settings} isDemo={isDemo} onSave={saveSettings} onTutorial={() => { setShowSettings(false); setShowTutorial(true); }} onFactoryReset={async () => { await dashboard.factoryReset(); setShowSettings(false); setShowTutorial(true); }} onClose={() => setShowSettings(false)} /></>}
     {dashboard.error && <p className="error-banner">{dashboard.error}</p>}
     <TaskPassNotice members={passMembers} />
-    {section === 'home' && <HomeOverview events={data.events} todos={availableTodos} members={data.members} weather={weather} weatherLocation={data.settings.weather_location} includeAdults={data.settings.leaderboard_include_adults} onProfiles={() => setShowFamily(true)} onCalendar={() => changeSection('calendar')} onTasks={() => changeSection('tasks')} onAddEvent={() => { setEventRange(null); setDialog('event'); }} onToggleTodo={toggleTodo} onEvent={setActiveEvent} />}
+    {section === 'home' && <HomeOverview events={data.events} todos={availableTodos} members={data.members} weather={weather} weatherLocation={data.settings.weather_location} includeAdults={data.settings.leaderboard_include_adults} onProfiles={() => setShowFamily(true)} onCalendar={() => changeSection('calendar')} onTodayCalendar={() => { setDate(new Date()); setCalendarView('day'); changeSection('calendar'); }} onTasks={() => changeSection('tasks')} onAddEvent={() => { setEventRange(null); setDialog('event'); }} onToggleTodo={toggleTodo} onEvent={setActiveEvent} />}
     {section === 'calendar' && <section className="calendar-card">
       <CalendarToolbar date={date} view={view} members={data.members} scopeId={calendarOwner} onScope={changeCalendarOwner} onDate={navigateDate} onView={changeView} onAdd={(kind) => { setEventRange(null); setDialog(kind); }} />
       {!calendarOwner && <div className="fixed-member-filters"><MemberFilters members={data.members} selected={selected} onChange={setSelected} /></div>}
@@ -145,6 +143,7 @@ export function DashboardPage({ demoMode = false }: { demoMode?: boolean }) {
     {!showSidekick && <button className="sidekick-fab" onClick={() => setShowSidekick(true)}><span>✦</span><strong>Ask Sidekick</strong><small>Plan with AI</small></button>}
     <SidekickPanel open={showSidekick} members={data.members} todos={data.todos} events={data.events} weather={weather} weatherLocation={data.settings.weather_location} onClose={() => setShowSidekick(false)} onApply={applySidekickAction} onUploadPhoto={dashboard.uploadRoomPhoto} />
     {celebrationWinners.length > 0 && <WinnerCelebration winners={celebrationWinners} onClose={closeCelebration} />}
+    {levelUp && celebrationWinners.length === 0 && <LevelUpCelebration member={levelUp.member} level={levelUp.level} onClose={() => setLevelUp(null)} />}
     {showTutorial && <OnboardingTour onNavigate={changeSection} onFinish={() => { setShowTutorial(false); saveSettings({ tutorial_completed: true }); }} />}
   </main>;
 }

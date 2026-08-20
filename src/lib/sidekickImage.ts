@@ -11,15 +11,15 @@ const readDataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => {
 });
 
 export async function prepareSidekickImage(file: File): Promise<SidekickImage> {
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP room photo.');
-  if (file.size > 8 * 1024 * 1024) throw new Error('Room photo must be smaller than 8 MB.');
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Choose a JPG, PNG, or WebP photo.');
+  if (file.size > 8 * 1024 * 1024) throw new Error('The photo must be smaller than 8 MB.');
   const image = await createImageBitmap(file);
   const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(image.width * scale));
   canvas.height = Math.max(1, Math.round(image.height * scale));
   const context = canvas.getContext('2d');
-  if (!context) throw new Error('This browser could not prepare the room photo.');
+  if (!context) throw new Error('This browser could not prepare the photo.');
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
   image.close();
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Could not resize this photo.')), 'image/jpeg', .82));

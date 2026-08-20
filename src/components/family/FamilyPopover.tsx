@@ -2,21 +2,27 @@ import { useEffect, useState } from 'react';
 import type { CreateMember, FamilyMember, Todo } from '../../types/family';
 import { PROFILE_COLORS } from '../../lib/themePalettes';
 import { rewardProgress } from '../../lib/rewards';
+import { FamilySharing } from './FamilySharing';
 
 interface Props {
   members: FamilyMember[];
   todos: Todo[];
   winnerIds: Set<string>;
+  inviteCode: string;
+  currentUserId: string | null;
+  isDemo: boolean;
   onAdd: (value: CreateMember, file?: File) => void;
   onAvatar: (id: string, file: File) => void;
   onColor: (id: string, color: string) => void;
   onName: (id: string, name: string) => void;
   onRemove: (id: string) => void;
+  onJoin: (code: string) => Promise<void>;
+  onRotate: () => Promise<void>;
   onClose: () => void;
 }
 
 export function FamilyPopover(props: Props) {
-  const { members, todos, winnerIds, onAdd, onAvatar, onColor, onName, onRemove, onClose } = props;
+  const { members, todos, winnerIds, inviteCode, currentUserId, isDemo, onAdd, onAvatar, onColor, onName, onRemove, onJoin, onRotate, onClose } = props;
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -37,7 +43,7 @@ export function FamilyPopover(props: Props) {
     <div className="family-scroll"><div className="family-list">{members.map((member) => { const progress = rewardProgress(member.id, todos); return <div className="profile-row" key={member.id}>
       <span className={`profile-avatar ${winnerIds.has(member.id) ? 'crowned' : ''}`} style={{ background: member.color }}>{member.avatar_url ? <img src={member.avatar_url} alt={`${member.name} profile`} /> : member.emoji}</span>
       <div className="profile-reward"><span><strong>{member.name}</strong>{member.member_type === 'child' && <em>Level {progress.level}</em>}</span>
-        <small>{member.member_type === 'child' ? `★ ${progress.totalStars} · ${progress.starsToNext} to next level` : member.member_type === 'adult' ? 'parent · not ranked by default' : 'family group'}</small>
+        <small>{member.member_type === 'child' ? `★ ${progress.totalStars} · ${progress.starsToNext} to next level` : member.user_id ? member.user_id === currentUserId ? 'signed-in parent · you' : 'signed-in parent · shared account' : member.member_type === 'adult' ? 'parent profile' : 'family group'}</small>
         {member.member_type === 'child' && <div className="profile-level"><i style={{ width: `${progress.percent}%` }} /></div>}
       </div>
       <button className="change-profile" onClick={() => setEditingId(editingId === member.id ? null : member.id)}>Change</button>
@@ -45,9 +51,9 @@ export function FamilyPopover(props: Props) {
         <label>Profile name<input defaultValue={member.name} onBlur={(event) => { const next = event.target.value.trim(); if (next && next !== member.name) onName(member.id, next); }} /></label>
         <div><label>Profile color</label><div className="edit-colors">{PROFILE_COLORS.map((item) => <button type="button" className={member.color === item ? 'active' : ''} style={{ background: item }} key={item} onClick={() => onColor(member.id, item)} aria-label={`Use ${item}`} />)}<label className="color-wheel"><input type="color" value={member.color} onChange={(event) => onColor(member.id, event.target.value)} /><span>＋</span></label></div></div>
         <label className="add-photo-button">📷 {member.avatar_url ? 'Change photo' : 'Add photo'}<input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { const file = event.target.files?.[0]; if (file) onAvatar(member.id, file); }} /></label>
-        <button className="remove-profile-text" onClick={() => onRemove(member.id)}>Remove profile</button>
+        {!member.user_id && <button className="remove-profile-text" onClick={() => onRemove(member.id)}>Remove profile</button>}
       </div>}
-    </div>; })}</div></div>
+    </div>; })}</div><FamilySharing inviteCode={inviteCode} isDemo={isDemo} onJoin={onJoin} onRotate={onRotate} /></div>
     {adding ? <form className="mini-form" onSubmit={(event) => { event.preventDefault(); onAdd({ name, color, emoji: name.slice(0, 1).toUpperCase(), member_type: memberType }, photo); setName(''); setPhoto(undefined); setMemberType('child'); setAdding(false); }}>
       <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Profile name" autoFocus required />
       <fieldset className="profile-type-picker"><legend>Profile type</legend><div>

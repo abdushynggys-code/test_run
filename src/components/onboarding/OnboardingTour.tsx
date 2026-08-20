@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getTourLayout, type TourLayout } from '../../lib/tourLayout';
+import { TourIllustration, type TourArt } from './TourIllustration';
 
 type TourSection = 'home' | 'calendar' | 'tasks';
 interface Props { onFinish: () => void; onNavigate: (section: TourSection) => void }
 
-const steps: Array<{ icon: string; label: string; title: string; text: string; selector: string; section: TourSection }> = [
-  { icon: '⌂', label: 'YOUR DAY', title: 'Start on Home', text: 'Weather, upcoming dates, tasks, and today’s leaderboard stay together here.', selector: '[data-tour="home-overview"]', section: 'home' },
-  { icon: '▦', label: 'PLAN AHEAD', title: 'Choose your calendar view', text: 'Switch between Month, Week, and Day anytime—even on your phone.', selector: '[data-tour="calendar-views"]', section: 'calendar' },
-  { icon: '★', label: 'EARN REWARDS', title: 'Finish tasks, collect stars', text: 'Every finished task adds stars. Today’s winning child wears the crown.', selector: '[data-tour="task-rewards"]', section: 'tasks' },
-  { icon: '✦', label: 'YOUR AI HELPER', title: 'Ask Sidekick', text: 'Talk, type, or add a room photo. Sidekick prepares fair chores for you to approve.', selector: '[data-tour="sidekick"]', section: 'home' },
+const steps: Array<{ art: TourArt; icon: string; label: string; title: string; text: string; selector: string; section: TourSection }> = [
+  { art: 'home', icon: '⌂', label: 'YOUR DAY', title: 'Start on Home', text: 'Weather, upcoming dates, tasks, and today’s leaderboard stay together here.', selector: '[data-tour="home-overview"]', section: 'home' },
+  { art: 'calendar', icon: '▦', label: 'PLAN AHEAD', title: 'Choose your calendar view', text: 'Switch between Month, Week, and Day anytime—even on your phone.', selector: '[data-tour="calendar-views"]', section: 'calendar' },
+  { art: 'tasks', icon: '★', label: 'EARN REWARDS', title: 'Finish tasks, collect stars', text: 'Every finished task adds stars. Today’s winning child wears the crown.', selector: '[data-tour="task-rewards"]', section: 'tasks' },
+  { art: 'sidekick', icon: '✦', label: 'YOUR AI HELPER', title: 'Ask Sidekick', text: 'Talk, type, or add a photo. Sidekick explains it or prepares a plan for you to approve.', selector: '[data-tour="sidekick"]', section: 'home' },
 ];
 
 export function OnboardingTour({ onFinish, onNavigate }: Props) {
@@ -53,6 +54,7 @@ export function OnboardingTour({ onFinish, onNavigate }: Props) {
       <div className="tour-sparkles" aria-hidden="true"><i /><i /><i /></div>
       <button className="tour-skip" onClick={finish}>Skip tour</button>
       <header><div className="tour-icon"><i /><span>{item.icon}</span><b /></div><div><p>{item.label}</p><small>Step {step + 1} of {steps.length}</small></div></header>
+      <TourIllustration kind={item.art} />
       <h2 id="tour-title">{item.title}</h2><p className="tour-copy">{item.text}</p>
       <div className="tour-dots">{steps.map((_, index) => <button aria-label={`Go to step ${index + 1}`} className={index === step ? 'active' : ''} key={index} onClick={() => move(index)} />)}</div>
       <footer>{step > 0 ? <button className="secondary-button" onClick={() => move(step - 1)}>Back</button> : <span />}

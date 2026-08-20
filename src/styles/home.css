@@ -3,11 +3,15 @@
 .home-welcome h1 { margin: 2px 0 3px; font-size: clamp(25px, 3vw, 38px); letter-spacing: -.04em; }
 .home-welcome > div > span { color: var(--muted); font-size: 12px; }
 .home-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.home-summary article { display: flex; align-items: center; gap: 11px; min-width: 0; border: 1px solid rgba(255,255,255,.82); border-radius: 17px; padding: 12px 14px; background: rgba(255,255,255,.8); box-shadow: var(--shadow); }
-.home-summary article > span { display: grid; flex: none; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--accent); background: #fff0ea; font-size: 19px; }
-.home-summary article:nth-child(2) > span { color: #2c8d69; background: #e9f8f1; }
-.home-summary article:nth-child(3) > span { color: #3979b8; background: #eaf4ff; }
-.home-summary article > div { min-width: 0; }
+.home-summary > * { display: flex; align-items: center; gap: 11px; min-width: 0; border: 1px solid rgba(255,255,255,.82); border-radius: 17px; padding: 12px 14px; color: var(--ink); background: rgba(255,255,255,.8); box-shadow: var(--shadow); font: inherit; text-align: left; }
+.home-summary > button { cursor: pointer; transition: transform 180ms ease, box-shadow 180ms ease; }
+.home-summary > button:hover { transform: translateY(-2px); }
+.home-summary > button:active { transform: translateY(0); }
+.home-summary > button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent), transparent 55%); outline-offset: 2px; }
+.home-summary > * > span { display: grid; flex: none; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--accent); background: #fff0ea; font-size: 19px; }
+.home-summary > :nth-child(2) > span { color: #2c8d69; background: #e9f8f1; }
+.home-summary > :nth-child(3) > span { color: #3979b8; background: #eaf4ff; }
+.home-summary > * > div { min-width: 0; }
 .home-summary strong, .home-summary small { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-summary strong { font-size: 20px; }.home-summary small { margin-top: 2px; color: var(--muted); font-size: 10px; }
 .home-panel { min-width: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.85); border-radius: 22px; padding: 17px; background: rgba(255,255,255,.84); box-shadow: 0 14px 38px rgba(36,51,70,.08); }
@@ -25,4 +29,4 @@
 .home-tasks-panel .home-list > button { grid-template-columns: 5px 25px minmax(0, 1fr); }.home-check { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--line); border-radius: 50%; color: var(--muted); font-size: 16px; }
 .home-empty { margin: 12px 0 2px; color: var(--muted); font-size: 11px; }
 @media (max-width: 900px) { .home-main-grid { grid-template-columns: 1fr; }.home-overview { margin: 12px; }.weather-forecast-row { grid-template-columns: repeat(7, minmax(82px, 1fr)); } }
-@media (max-width: 680px) { .home-overview { gap: 9px; margin: 10px 8px; }.home-welcome { align-items: center; padding: 2px 3px 4px; }.home-welcome h1 { font-size: 24px; }.home-welcome > .primary-button { min-height: 38px; padding-inline: 10px; font-size: 10px; }.home-summary { gap: 6px; }.home-summary article { display: grid; justify-items: center; gap: 4px; padding: 9px 4px; text-align: center; }.home-summary article > span { width: 31px; height: 31px; font-size: 16px; }.home-summary strong { font-size: 16px; }.home-summary small { max-width: 100%; font-size: 8px; }.home-panel { border-radius: 17px; padding: 13px; }.weather-forecast-row { grid-template-columns: repeat(7, 75px); margin-right: -13px; padding-right: 13px; }.home-main-grid { gap: 9px; }.home-list time { width: 67px; } }
+@media (max-width: 680px) { .home-overview { gap: 9px; margin: 10px 8px; }.home-welcome { align-items: center; padding: 2px 3px 4px; }.home-welcome h1 { font-size: 24px; }.home-welcome > .primary-button { min-height: 38px; padding-inline: 10px; font-size: 10px; }.home-summary { gap: 6px; }.home-summary > * { display: grid; justify-items: center; gap: 4px; padding: 9px 4px; text-align: center; }.home-summary > * > span { width: 31px; height: 31px; font-size: 16px; }.home-summary strong { font-size: 16px; }.home-summary small { max-width: 100%; font-size: 8px; }.home-panel { border-radius: 17px; padding: 13px; }.weather-forecast-row { grid-template-columns: repeat(7, 75px); margin-right: -13px; padding-right: 13px; }.home-main-grid { gap: 9px; }.home-list time { width: 67px; } }

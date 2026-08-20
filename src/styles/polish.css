@@ -2,6 +2,8 @@
 html { min-width: 320px; min-height: 100%; scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { min-height: 100dvh; overflow-x: clip; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 #root { min-height: 100dvh; }
+img, video { display: block; max-width: 100%; }
+.dashboard-workspace > *, .calendar-card, .calendar-viewport, .tasks-board, .task-member-grid, .family-sharing { min-width: 0; max-width: 100%; }
 button, [role='button'], a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 button:disabled { cursor: not-allowed; filter: none; opacity: .58; transform: none; }
 textarea { font: inherit; }
@@ -41,6 +43,9 @@ a:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in srgb, 
   .filter-chip { min-height: 36px; }
   .modal-backdrop { align-items: end; padding: max(10px, env(safe-area-inset-top)) 0 0; overscroll-behavior: contain; }
   .modal { width: 100%; max-height: calc(100dvh - max(10px, env(safe-area-inset-top))); border-radius: 22px 22px 0 0; padding: 18px 16px max(18px, env(safe-area-inset-bottom)); overscroll-behavior: contain; }
+  .settings-panel { width: 100%; max-width: 100%; padding: max(18px,env(safe-area-inset-top)) 16px max(22px,env(safe-area-inset-bottom)); }
+  .family-sharing form { grid-template-columns: 1fr; }
+  .family-sharing .secondary-button { width: 100%; }
   .sidekick-panel { top: max(8px, env(safe-area-inset-top)); height: calc(100dvh - 84px - env(safe-area-inset-top)); max-height: calc(100dvh - 84px - env(safe-area-inset-top)); }
   .sidekick-fab { display: none; }
 }
@@ -49,6 +54,15 @@ a:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in srgb, 
   .home-welcome { align-items: stretch; grid-template-columns: 1fr; }
   .home-welcome > .primary-button { justify-self: start; }
   .home-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .invite-code { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .dashboard-nav { height: 58px; border-radius: 20px; }
+  .dashboard-nav button { min-height: 46px; }
+  .dashboard-shell { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .sidekick-panel { bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .tour-card { max-height: calc(100dvh - 16px); }
 }
 
 @media (prefers-reduced-motion: reduce) {

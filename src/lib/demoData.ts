@@ -6,13 +6,13 @@ const now = new Date();
 const at = (day: number, time: string) => `${toDateKey(addDays(now, day))}T${time}:00`;
 
 export const demoData: DashboardData = {
-  family: { id: 'demo-family', name: 'The Parker Family', owner_id: 'demo-parent' },
+  family: { id: 'demo-family', name: 'The Parker Family', owner_id: 'demo-parent', join_code: 'DEMOFAMILY' },
   members: [
-    { id: 'mom', family_id: 'demo-family', name: 'Mom', avatar_url: null, color: '#ef6f91', emoji: 'M', member_type: 'adult', active: true, level_20_pass_date: null },
-    { id: 'dad', family_id: 'demo-family', name: 'Dad', avatar_url: null, color: '#4d8ef7', emoji: 'D', member_type: 'adult', active: true, level_20_pass_date: null },
-    { id: 'emma', family_id: 'demo-family', name: 'Emma', avatar_url: null, color: '#51ae78', emoji: 'E', member_type: 'child', active: true, level_20_pass_date: null },
-    { id: 'noah', family_id: 'demo-family', name: 'Noah', avatar_url: null, color: '#8b6dda', emoji: 'N', member_type: 'child', active: true, level_20_pass_date: null },
-    { id: 'family', family_id: 'demo-family', name: 'Family', avatar_url: null, color: '#28a6a0', emoji: 'F', member_type: 'group', active: true, level_20_pass_date: null },
+    { id: 'mom', family_id: 'demo-family', user_id: 'demo-parent', name: 'Mom', avatar_url: null, color: '#ef6f91', emoji: 'M', member_type: 'adult', active: true, level_20_pass_date: null },
+    { id: 'dad', family_id: 'demo-family', user_id: null, name: 'Dad', avatar_url: null, color: '#4d8ef7', emoji: 'D', member_type: 'adult', active: true, level_20_pass_date: null },
+    { id: 'emma', family_id: 'demo-family', user_id: null, name: 'Emma', avatar_url: null, color: '#51ae78', emoji: 'E', member_type: 'child', active: true, level_20_pass_date: null },
+    { id: 'noah', family_id: 'demo-family', user_id: null, name: 'Noah', avatar_url: null, color: '#8b6dda', emoji: 'N', member_type: 'child', active: true, level_20_pass_date: null },
+    { id: 'family', family_id: 'demo-family', user_id: null, name: 'Family', avatar_url: null, color: '#28a6a0', emoji: 'F', member_type: 'group', active: true, level_20_pass_date: null },
   ],
   events: [
     { id: 'e1', family_id: 'demo-family', title: 'School drop-off', description: '', start_time: at(0, '08:00'), end_time: at(0, '08:30'), all_day: false, location: 'Lincoln School', family_member_id: 'emma', color: null, repeat_rule: 'weekly' },

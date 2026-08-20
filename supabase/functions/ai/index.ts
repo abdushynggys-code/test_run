@@ -9,7 +9,32 @@ const cors = {
 
 type GeminiResponse = {
   candidates?: Array<{ content?: { parts?: Array<{ text?: unknown }> } }>;
+  error?: { status?: unknown };
 };
+
+const retryableStatuses = new Set([429, 500, 502, 503, 504]);
+
+async function askGemini(requestBody: object) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  let response: Response | null = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+        signal: AbortSignal.timeout(25_000),
+      });
+      if (!retryableStatuses.has(response.status) || attempt === 2) return response;
+    } catch (error) {
+      if (attempt === 2) throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
+  }
+
+  return response as Response;
+}
 
 function json(body: object, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -41,23 +66,38 @@ Deno.serve(async (request) => {
     if (prompt.length > 20_000 || system.length > 6_000) return json({ error: 'The request is too long.' }, 400);
     if (imageData && (!['image/jpeg', 'image/png', 'image/webp'].includes(mimeType) || imageData.length > 8_000_000)) return json({ error: 'The room photo is too large or unsupported.' }, 400);
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: system ? { parts: [{ text: system }] } : undefined,
-          contents: [{ parts: [...(imageData ? [{ inlineData: { mimeType, data: imageData } }] : []), { text: prompt }] }],
-          generationConfig: body.json === true ? { responseMimeType: 'application/json' } : undefined,
-        }),
-      },
-    );
+    const response = await askGemini({
+      systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+      contents: [{ parts: [...(imageData ? [{ inlineData: { mimeType, data: imageData } }] : []), { text: prompt }] }],
+      generationConfig: body.json === true ? {
+        responseMimeType: 'application/json',
+        temperature: 0.25,
+        maxOutputTokens: 1_200,
+        responseJsonSchema: {
+          type: 'object',
+          required: ['reply', 'action'],
+          properties: {
+            reply: { type: 'string' },
+            action: {
+              type: 'object', required: ['type'], additionalProperties: false,
+              properties: {
+                type: { type: 'string', enum: ['none', 'create_todo', 'create_todos', 'complete_todo', 'delete_todo', 'create_event', 'delete_event'] },
+                title: { type: 'string' }, dueDate: { type: ['string', 'null'] }, memberId: { type: ['string', 'null'] },
+                priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] }, starValue: { type: 'integer', minimum: 1, maximum: 5 },
+                todoId: { type: 'string' }, eventId: { type: 'string' }, startTime: { type: 'string' }, endTime: { type: 'string' }, location: { type: 'string' },
+                items: { type: 'array', maxItems: 10, items: { type: 'object', required: ['title', 'dueDate', 'memberId', 'priority', 'starValue'], properties: { title: { type: 'string' }, dueDate: { type: ['string', 'null'] }, memberId: { type: ['string', 'null'] }, priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] }, starValue: { type: 'integer', minimum: 1, maximum: 5 } } } },
+              },
+            },
+          },
+        },
+      } : { temperature: 0.45, maxOutputTokens: 1_200 },
+    });
 
     const data = await response.json() as GeminiResponse;
     if (!response.ok) {
-      console.error('Gemini request failed', response.status, data);
-      return json({ error: 'Sidekick could not answer right now. Please try again.' }, 502);
+      console.error('Gemini request failed', response.status, data.error?.status);
+      const overloaded = response.status === 429 || response.status === 503;
+      return json({ error: overloaded ? 'Sidekick is busy right now. Wait a moment and try again.' : 'Sidekick could not answer right now. Please try again.' }, overloaded ? 503 : 502);
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;

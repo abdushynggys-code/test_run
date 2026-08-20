@@ -20,11 +20,13 @@ export interface Family {
   id: string;
   name: string;
   owner_id: string;
+  join_code: string;
 }
 
 export interface FamilyMember {
   id: string;
   family_id: string;
+  user_id: string | null;
   name: string;
   avatar_url: string | null;
   color: string;

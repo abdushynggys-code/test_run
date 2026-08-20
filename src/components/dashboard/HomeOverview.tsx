@@ -10,6 +10,7 @@ interface Props {
   weather: WeatherSnapshot | null;
   weatherLocation: string;
   onCalendar: () => void;
+  onTodayCalendar: () => void;
   onTasks: () => void;
   onAddEvent: () => void;
   onToggleTodo: (todo: Todo) => void;
@@ -22,7 +23,7 @@ const dayLabel = (value: string) => new Intl.DateTimeFormat('en', { weekday: 'sh
 const taskDate = (value: string | null) => value ? new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(`${value}T12:00:00`)) : 'No due date';
 
 export function HomeOverview(props: Props) {
-  const { events, todos, members, weather, weatherLocation, onCalendar, onTasks, onAddEvent, onToggleTodo, onEvent, includeAdults, onProfiles } = props;
+  const { events, todos, members, weather, weatherLocation, onCalendar, onTodayCalendar, onTasks, onAddEvent, onToggleTodo, onEvent, includeAdults, onProfiles } = props;
   const now = new Date();
   const today = toDateKey(now);
   const upcoming = events.filter((event) => new Date(event.end_time) >= now).sort((a, b) => a.start_time.localeCompare(b.start_time)).slice(0, 6);
@@ -36,8 +37,8 @@ export function HomeOverview(props: Props) {
       <button className="primary-button" onClick={onAddEvent}>＋ Add event</button>
     </header>
     <div className="home-summary" data-tour="home-overview">
-      <article><span>◷</span><div><strong>{todayEvents}</strong><small>events today</small></div></article>
-      <article><span>✓</span><div><strong>{dueToday}</strong><small>tasks due today</small></div></article>
+      <button type="button" onClick={onTodayCalendar} aria-label={`Open today's ${todayEvents} events in the calendar`}><span>◷</span><div><strong>{todayEvents}</strong><small>events today</small></div></button>
+      <button type="button" onClick={onTasks} aria-label={`Open ${dueToday} tasks due today`}><span>✓</span><div><strong>{dueToday}</strong><small>tasks due today</small></div></button>
       <article><span>{weather?.icon ?? '○'}</span><div><strong>{weather ? `${weather.temperature}°` : '--'}</strong><small>{weatherLocation}</small></div></article>
     </div>
     <section className="home-panel weather-forecast-panel">

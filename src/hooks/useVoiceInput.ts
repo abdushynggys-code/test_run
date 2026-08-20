@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 
 export function useVoiceInput(onTranscript: (text: string) => void) {
   const [listening, setListening] = useState(false);
+  const [error, setError] = useState('');
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const supported = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 
@@ -10,16 +11,17 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) return;
     const recognition = new Recognition();
+    setError('');
     recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = navigator.language || 'en-US';
     recognition.onresult = (event) => onTranscript(event.results[0]?.[0]?.transcript ?? '');
     recognition.onend = () => setListening(false);
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = () => { setListening(false); setError('I could not hear that. Check microphone permission and try again.'); };
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
   };
 
-  return { listening, supported, toggle };
+  return { listening, supported, error, toggle };
 }

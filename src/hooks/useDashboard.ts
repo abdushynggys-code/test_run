@@ -15,10 +15,19 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
   }, [isDemo, session]);
 
   useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    if (isDemo || !data?.family.id) return;
+    let timer = 0;
+    const unsubscribe = familyApi.subscribe(data.family.id, () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void refresh(), 120);
+    });
+    return () => { window.clearTimeout(timer); unsubscribe(); };
+  }, [data?.family.id, isDemo, refresh]);
 
   async function run(remote: () => Promise<void>, local: (current: DashboardData) => DashboardData) {
     if (isDemo) { setData((current) => current ? local(current) : current); return; }
-    try { await remote(); await refresh(); }
+    try { await remote(); await refresh(); setError(''); }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not save changes.'); }
   }
 
@@ -26,7 +35,7 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
   const factoryReset = async () => {
     if (!data) return;
     if (isDemo) { setData(demoData); return; }
-    try { await familyApi.factoryReset(data.family.id, session?.user.id ?? ''); await refresh(); setError(''); }
+    try { await familyApi.factoryReset(data.family.id); await refresh(); setError(''); }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not reset Kinboard.'); throw reason; }
   };
   return {
@@ -35,11 +44,12 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
     addReminder: (value: CreateReminder) => data && run(() => familyApi.addReminder(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, reminders: [...current.reminders, { ...value, id: id(), family_id: current.family.id, completed: false }] })),
     addTodo: (value: CreateTodo) => data && run(() => familyApi.addTodo(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, todos: [...current.todos, { ...value, id: id(), family_id: current.family.id, completed: false, completed_at: null }] })),
     addMember: (value: CreateMember, file?: File) => data && run(async () => {
-      const avatarUrl = file ? await familyApi.uploadAvatar(session?.user.id ?? '', file) : null;
+      const avatarUrl = file ? await familyApi.uploadAvatar(data.family.id, file) : null;
       await familyApi.addMember(data.family.id, { ...value, avatar_url: avatarUrl });
-    }, (current) => ({ ...current, members: [...current.members, { ...value, avatar_url: file ? URL.createObjectURL(file) : null, id: id(), family_id: current.family.id, active: true, level_20_pass_date: null }] })),
+    }, (current) => ({ ...current, members: [...current.members, { ...value, user_id: null, avatar_url: file ? URL.createObjectURL(file) : null, id: id(), family_id: current.family.id, active: true, level_20_pass_date: null }] })),
     updateMemberAvatar: (memberId: string, file: File) => run(async () => {
-      const avatarPath = await familyApi.uploadAvatar(session?.user.id ?? '', file);
+      if (!data) return;
+      const avatarPath = await familyApi.uploadAvatar(data.family.id, file);
       await familyApi.updateMemberAvatar(memberId, avatarPath);
     }, (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, avatar_url: URL.createObjectURL(file) } : member) })),
     updateMemberColor: (memberId: string, color: string) => run(() => familyApi.updateMemberColor(memberId, color), (current) => ({ ...current, members: current.members.map((member) => member.id === memberId ? { ...member, color } : member) })),
@@ -50,10 +60,24 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
     removeItem: (table: 'events' | 'todos' | 'reminders', itemId: string) => run(() => familyApi.remove(table, itemId), (current) => ({ ...current, [table]: current[table].filter((item) => item.id !== itemId) })),
     saveSettings: (value: Partial<FamilySettings>) => data && run(() => familyApi.saveSettings(data.family.id, value), (current) => ({ ...current, settings: { ...current.settings, ...value } })),
     factoryReset,
+    joinFamily: async (code: string) => {
+      if (isDemo) throw new Error('Create an account to share a live family.');
+      try { await familyApi.joinFamily(code); await refresh(); setError(''); }
+      catch (reason) { const message = reason instanceof Error ? reason.message : 'Could not join that family.'; setError(message); throw new Error(message); }
+    },
+    rotateInviteCode: async () => {
+      if (!data || isDemo) return;
+      try {
+        const joinCode = await familyApi.rotateInviteCode(data.family.id);
+        setData((current) => current ? { ...current, family: { ...current.family, join_code: joinCode } } : current);
+        setError('');
+      } catch (reason) { const message = reason instanceof Error ? reason.message : 'Could not create a new invite code.'; setError(message); throw new Error(message); }
+    },
     uploadRoomPhoto: async (file: File) => {
       if (isDemo) return;
       if (!session) throw new Error('Sign in to upload a room photo.');
-      await familyApi.uploadRoomPhoto(session.user.id, file);
+      if (!data) throw new Error('The family is still loading.');
+      await familyApi.uploadRoomPhoto(data.family.id, file);
     },
   };
 }

@@ -3,7 +3,7 @@ import { dailyLeaderboard, rewardProgress } from './rewards';
 
 interface CompletionRewards {
   newlyCrowned: ReturnType<typeof dailyLeaderboard>;
-  leveledUp: boolean;
+  levelUp: { member: FamilyMember; level: number } | null;
   passMember: FamilyMember | null;
 }
 
@@ -16,7 +16,7 @@ export function taskCompletionRewards(
 ): CompletionRewards {
   const member = members.find((item) => item.id === todo.family_member_id);
   const canCompete = member && (member.member_type === 'child' || includeAdults && member.member_type === 'adult');
-  if (!member || !canCompete) return { newlyCrowned: [], leveledUp: false, passMember: null };
+  if (!member || !canCompete) return { newlyCrowned: [], levelUp: null, passMember: null };
 
   const previousProgress = rewardProgress(member.id, todos);
   const projected = todos.map((item) => item.id === todo.id
@@ -29,5 +29,5 @@ export function taskCompletionRewards(
     && !member.level_20_pass_date
     && nextProgress.level >= 20;
   const leveledUp = member.member_type === 'child' && nextProgress.level > previousProgress.level;
-  return { newlyCrowned, leveledUp, passMember: earnsPass ? member : null };
+  return { newlyCrowned, levelUp: leveledUp ? { member, level: nextProgress.level } : null, passMember: earnsPass ? member : null };
 }
