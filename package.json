@@ -15,8 +15,10 @@
     "db:new": "supabase migration new",
     "db:push": "supabase db push",
     "keep-awake:setup": "node scripts/setup-keep-awake.mjs",
-    "ai:secret": "node scripts/setup-ai-secret.mjs",
-    "ai:deploy": "supabase functions deploy ai"
+    "ai:secret": "node scripts/setup-supabase-secret.mjs GEMINI_API_KEY",
+    "ai:deploy": "supabase functions deploy ai",
+    "weather:secret": "node scripts/setup-supabase-secret.mjs OPENWEATHER_API_KEY",
+    "weather:deploy": "supabase functions deploy weather --no-verify-jwt"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.8",

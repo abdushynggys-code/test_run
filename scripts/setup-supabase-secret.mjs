@@ -4,8 +4,10 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
+const secretName = process.argv[2] ?? '';
+
 function fail(message) {
-  console.error(`AI secret setup failed: ${message}`);
+  console.error(`Secret setup failed: ${message}`);
   process.exit(1);
 }
 
@@ -19,6 +21,8 @@ function readValue(source, name) {
   return line.slice(line.indexOf('=') + 1).trim().replace(/^(['"])(.*)\1$/, '$2');
 }
 
+if (!/^[A-Z][A-Z0-9_]*$/.test(secretName)) fail('provide a valid environment variable name');
+
 let source;
 try {
   source = await readFile('.env', 'utf8');
@@ -26,18 +30,18 @@ try {
   fail('.env is missing');
 }
 
-const apiKey = readValue(source, 'GEMINI_API_KEY');
-if (!apiKey) fail('GEMINI_API_KEY is missing in .env');
+const secretValue = readValue(source, secretName);
+if (!secretValue) fail(`${secretName} is missing in .env`);
 
-const tempDirectory = await mkdtemp(join(tmpdir(), 'nfact-ai-secret-'));
-const secretFile = join(tempDirectory, 'gemini.env');
+const tempDirectory = await mkdtemp(join(tmpdir(), 'nfact-supabase-secret-'));
+const secretFile = join(tempDirectory, 'secret.env');
 const supabaseCli = fileURLToPath(
   new URL('../node_modules/supabase/dist/supabase.js', import.meta.url),
 );
 
 let uploadError = '';
 try {
-  await writeFile(secretFile, `GEMINI_API_KEY=${apiKey}\n`, { mode: 0o600 });
+  await writeFile(secretFile, `${secretName}=${secretValue}\n`, { mode: 0o600 });
   const result = spawnSync(process.execPath, [supabaseCli, 'secrets', 'set', '--env-file', secretFile], {
     stdio: 'inherit',
   });
@@ -50,4 +54,4 @@ try {
 }
 
 if (uploadError) fail(uploadError);
-console.log('GEMINI_API_KEY uploaded to Supabase.');
+console.log(`${secretName} uploaded to Supabase.`);

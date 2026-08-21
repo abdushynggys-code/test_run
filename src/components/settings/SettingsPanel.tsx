@@ -49,7 +49,7 @@ export function SettingsPanel({ settings, isDemo, isOwner, onSave, onClose, onTu
       <label className="settings-switch"><span><strong>Include parents</strong><small>Off keeps the daily challenge just for children.</small></span><input type="checkbox" checked={settings.leaderboard_include_adults} onChange={(event) => onSave({ leaderboard_include_adults: event.target.checked })} /></label>
     </section>
     <section><h3>Help</h3><button className="location-button" onClick={onTutorial}>Show the quick tutorial again</button></section>
-    <section className="settings-about"><h3>Display style</h3><p>Kinboard uses one calm, high-contrast family display theme so it is easy to read from across the room.</p><p><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Weather data by Open-Meteo</a></p></section>
+    <section className="settings-about"><h3>Display style</h3><p>Kinboard uses one calm, high-contrast family display theme so it is easy to read from across the room.</p><p><a href="https://openweathermap.org/" target="_blank" rel="noreferrer">Weather data by OpenWeather</a></p></section>
     <section className="settings-danger"><h3>Danger zone</h3>{isOwner ? <><p>Return Kinboard to its original empty setup.</p><FactoryResetControl isDemo={isDemo} onReset={onFactoryReset} /></> : <p>Only the calendar admin can erase and reset this shared calendar.</p>}</section>
     {!isDemo && <button className="logout-button" onClick={() => void supabase.auth.signOut()}>Sign out</button>}
     {isDemo && <p className="demo-note">Demo changes reset when this page refreshes.</p>}
