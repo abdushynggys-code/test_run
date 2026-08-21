@@ -1,11 +1,11 @@
 import { supabase } from '../../lib/supabase';
 
-export function GoogleAuthButton({ onError }: { onError: (message: string) => void }) {
+export function GoogleAuthButton({ onError, redirectTo }: { onError: (message: string) => void; redirectTo: string }) {
   async function continueWithGoogle() {
     onError('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo },
     });
     if (error) onError(error.message);
   }

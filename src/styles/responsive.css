@@ -7,6 +7,7 @@
   .date-block .brand-mark, .date-block div { display: none; }
   .date-block time { margin: 0; font-size: 21px; }
   .demo-badge { display: none; }
+  .invite-parent-button { padding-inline: 8px; }.invite-label-long { display: none; }.invite-label-short { display: inline; }
   .calendar-card { margin-top: 0; border-width: 0 0 1px; border-radius: 0; box-shadow: none; }
   .calendar-toolbar { position: sticky; z-index: 16; top: 60px; padding: 11px 10px 8px; background: rgba(255,255,255,.96); box-shadow: 0 1px 0 var(--line); backdrop-filter: blur(18px); }
   .calendar-title { margin-bottom: 7px; }

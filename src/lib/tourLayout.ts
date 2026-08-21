@@ -32,7 +32,8 @@ export function getTourLayout(target: DOMRect, measuredWidth: number, measuredHe
   if (!mobile && room.right >= cardWidth + gap) side = 'right';
   else if (!mobile && room.left >= cardWidth + gap) side = 'left';
   else if (room.bottom >= cardHeight + gap) side = 'bottom';
-  else side = 'top';
+  else if (room.top >= cardHeight + gap) side = 'top';
+  else side = room.bottom >= room.top ? 'bottom' : 'top';
   let left = clamp(target.left + target.width / 2 - cardWidth / 2, edge, viewport.width - cardWidth - edge);
   let top = side === 'bottom' ? target.bottom + gap : target.top - cardHeight - gap;
   if (side === 'right') { left = target.right + gap; top = target.top + target.height / 2 - cardHeight / 2; }
@@ -41,9 +42,13 @@ export function getTourLayout(target: DOMRect, measuredWidth: number, measuredHe
   const start = side === 'bottom' ? { x: left + cardWidth / 2, y: top } : side === 'top' ? { x: left + cardWidth / 2, y: top + cardHeight } : side === 'right' ? { x: left, y: top + cardHeight / 2 } : { x: left + cardWidth, y: top + cardHeight / 2 };
   const end = side === 'bottom' ? { x: target.left + target.width / 2, y: target.bottom + 5 } : side === 'top' ? { x: target.left + target.width / 2, y: target.top - 5 } : side === 'right' ? { x: target.right + 5, y: target.top + target.height / 2 } : { x: target.left - 5, y: target.top + target.height / 2 };
   const pad = mobile ? 7 : 10;
+  const spotlightLeft = clamp(target.left - pad, 3, viewport.width - 3);
+  const spotlightTop = clamp(target.top - pad, 3, viewport.height - 3);
+  const spotlightRight = clamp(target.right + pad, spotlightLeft, viewport.width - 3);
+  const spotlightBottom = clamp(target.bottom + pad, spotlightTop, viewport.height - 3);
   return {
     card: { left, top, width: cardWidth }, side,
-    spotlight: { left: Math.max(3, target.left - pad), top: Math.max(3, target.top - pad), width: Math.min(viewport.width - 6, target.width + pad * 2), height: Math.min(viewport.height - 6, target.height + pad * 2) },
+    spotlight: { left: spotlightLeft, top: spotlightTop, width: spotlightRight - spotlightLeft, height: spotlightBottom - spotlightTop },
     arrowPath: arrowPath(start, end, step),
   };
 }

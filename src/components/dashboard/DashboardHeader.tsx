@@ -9,11 +9,12 @@ interface Props {
   weather: WeatherSnapshot | null;
   isDemo: boolean;
   onFamily: () => void;
+  onInvite: () => void;
   onSidekick: () => void;
   winnerIds: Set<string>;
 }
 
-export function DashboardHeader({ familyName, members, settings, weather, isDemo, onFamily, onSidekick, winnerIds }: Props) {
+export function DashboardHeader({ familyName, members, settings, weather, isDemo, onFamily, onInvite, onSidekick, winnerIds }: Props) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -33,6 +34,7 @@ export function DashboardHeader({ familyName, members, settings, weather, isDemo
     </div>
     <div className="header-actions">
       {isDemo && <span className="demo-badge">Demo</span>}
+      <button className="invite-parent-button" data-tour="family-invite" aria-label="Invite parent" onClick={onInvite}>＋ <span className="invite-label-long">Invite parent</span><span className="invite-label-short" aria-hidden="true">Invite</span></button>
       <button className="sidekick-header-button" onClick={onSidekick}><span>✦</span> Ask Sidekick</button>
       <button className="profile-stack" onClick={onFamily} aria-label={`${familyName} profiles`}>
         {[...members].sort((left, right) => Number(winnerIds.has(right.id)) - Number(winnerIds.has(left.id))).slice(0, 4).map((member) => <span className={winnerIds.has(member.id) ? 'crowned' : ''} data-profile-id={member.id} key={member.id} style={{ background: member.color }}>{member.avatar_url ? <img src={member.avatar_url} alt="" /> : member.emoji}</span>)}

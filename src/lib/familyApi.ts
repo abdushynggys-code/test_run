@@ -1,16 +1,19 @@
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import type { CreateEvent, CreateMember, CreateReminder, CreateTodo, DashboardData, Family, FamilyMember, FamilySettings } from '../types/family';
+import type { CreateEvent, CreateMember, CreateReminder, CreateTodo, DashboardData, Family, FamilyMember, FamilyRole, FamilySettings } from '../types/family';
 
 export async function loadDashboard(session: Session): Promise<DashboardData> {
-  const profileResult = await supabase.from('profiles').select('active_family_id').eq('id', session.user.id).single();
+  const [profileResult, accountsResult] = await Promise.all([
+    supabase.from('profiles').select('active_family_id').eq('id', session.user.id).single(),
+    supabase.from('family_accounts').select('family_id, role').eq('user_id', session.user.id).order('joined_at'),
+  ]);
   if (profileResult.error) throw profileResult.error;
-  let familyId = profileResult.data.active_family_id as string | null;
-  if (!familyId) {
-    const membership = await supabase.from('family_accounts').select('family_id').eq('user_id', session.user.id).order('joined_at').limit(1).single();
-    if (membership.error) throw membership.error;
-    familyId = membership.data.family_id as string;
-  }
+  if (accountsResult.error) throw accountsResult.error;
+  const accounts = accountsResult.data as Array<{ family_id: string; role: FamilyRole }>;
+  const activeFamilyId = profileResult.data.active_family_id as string | null;
+  const account = accounts.find((item) => item.family_id === activeFamilyId) ?? accounts[0];
+  if (!account) throw new Error('This account is not connected to a family calendar yet.');
+  const familyId = account.family_id;
   const familyResult = await supabase.from('families').select('*').eq('id', familyId).single();
   if (familyResult.error) throw familyResult.error;
   const family = familyResult.data as Family;
@@ -24,12 +27,15 @@ export async function loadDashboard(session: Session): Promise<DashboardData> {
   const failure = [members, events, reminders, todos, settings].find((result) => result.error);
   if (failure?.error) throw failure.error;
   const memberRows = members.data as FamilyMember[];
-  const membersWithImages = await Promise.all(memberRows.map(async (member) => {
-    if (!member.avatar_url || member.avatar_url.startsWith('http')) return member;
-    const { data } = await supabase.storage.from('family-avatars').createSignedUrl(member.avatar_url, 3_600);
-    return { ...member, avatar_url: data?.signedUrl ?? null };
-  }));
-  return { family, members: membersWithImages, events: events.data, reminders: reminders.data, todos: todos.data, settings: settings.data } as DashboardData;
+  const avatarPaths = memberRows.flatMap((member) => member.avatar_url && !member.avatar_url.startsWith('http') ? [member.avatar_url] : []);
+  const signedAvatars = avatarPaths.length
+    ? await supabase.storage.from('family-avatars').createSignedUrls(avatarPaths, 3_600)
+    : { data: [], error: null };
+  const avatarUrls = new Map(signedAvatars.data?.map((item) => [item.path, item.signedUrl]) ?? []);
+  const membersWithImages = memberRows.map((member) => member.avatar_url && avatarUrls.has(member.avatar_url)
+    ? { ...member, avatar_url: avatarUrls.get(member.avatar_url) ?? null }
+    : member);
+  return { family, accountRole: account.role, members: membersWithImages, events: events.data, reminders: reminders.data, todos: todos.data, settings: settings.data } as DashboardData;
 }
 
 async function insertRow(table: string, value: Record<string, unknown>) {
@@ -51,10 +57,10 @@ async function clearStorageFolder(bucket: string, path: string): Promise<void> {
 }
 
 export const familyApi = {
-  addEvent: (familyId: string, userId: string, value: CreateEvent) => insertRow('events', { ...value, family_id: familyId, created_by: userId }),
-  addReminder: (familyId: string, userId: string, value: CreateReminder) => insertRow('reminders', { ...value, family_id: familyId, created_by: userId, completed: false }),
-  addTodo: (familyId: string, userId: string, value: CreateTodo) => insertRow('todos', { ...value, family_id: familyId, created_by: userId, completed: false }),
-  addMember: (familyId: string, value: CreateMember) => insertRow('family_members', { ...value, family_id: familyId, active: true }),
+  addEvent: (id: string, familyId: string, userId: string, value: CreateEvent) => insertRow('events', { ...value, id, family_id: familyId, created_by: userId }),
+  addReminder: (id: string, familyId: string, userId: string, value: CreateReminder) => insertRow('reminders', { ...value, id, family_id: familyId, created_by: userId, completed: false }),
+  addTodo: (id: string, familyId: string, userId: string, value: CreateTodo) => insertRow('todos', { ...value, id, family_id: familyId, created_by: userId, completed: false }),
+  addMember: (id: string, familyId: string, value: CreateMember) => insertRow('family_members', { ...value, id, family_id: familyId, active: true }),
   async toggle(table: 'todos' | 'reminders', id: string, completed: boolean) {
     const value = table === 'todos' ? { completed, completed_at: completed ? new Date().toISOString() : null } : { completed };
     const { error } = await supabase.from(table).update(value).eq('id', id);
@@ -109,7 +115,6 @@ export const familyApi = {
     const { error } = await supabase.rpc('factory_reset_family', { target_family: familyId });
     if (error) throw error;
     await Promise.allSettled([
-      clearStorageFolder('family-avatars', familyId),
       clearStorageFolder('room-photos', familyId),
     ]);
   },

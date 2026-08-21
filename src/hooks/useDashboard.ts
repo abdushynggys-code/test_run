@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { demoData } from '../lib/demoData';
 import { familyApi, loadDashboard } from '../lib/familyApi';
 import type { CreateEvent, CreateMember, CreateReminder, CreateTodo, DashboardData, FamilySettings } from '../types/family';
+import { clearPendingInvite, readPendingInvite } from '../lib/invite';
 
 export function useDashboard(session: Session | null, isDemo: boolean) {
   const [data, setData] = useState<DashboardData | null>(isDemo ? demoData : null);
@@ -10,7 +11,11 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
 
   const refresh = useCallback(async () => {
     if (!session || isDemo) return;
-    try { setData(await loadDashboard(session)); setError(''); }
+    try {
+      const inviteCode = readPendingInvite();
+      if (inviteCode) { await familyApi.joinFamily(inviteCode); clearPendingInvite(); }
+      setData(await loadDashboard(session)); setError('');
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not load the family dashboard.'); }
   }, [isDemo, session]);
 
@@ -26,9 +31,14 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
   }, [data?.family.id, isDemo, refresh]);
 
   async function run(remote: () => Promise<void>, local: (current: DashboardData) => DashboardData) {
-    if (isDemo) { setData((current) => current ? local(current) : current); return; }
-    try { await remote(); await refresh(); setError(''); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not save changes.'); }
+    setData((current) => current ? local(current) : current);
+    if (isDemo) return;
+    try { await remote(); setError(''); }
+    catch (reason) {
+      const message = reason instanceof Error ? reason.message : 'Could not save changes.';
+      await refresh();
+      setError(message);
+    }
   }
 
   const id = () => crypto.randomUUID();
@@ -40,13 +50,34 @@ export function useDashboard(session: Session | null, isDemo: boolean) {
   };
   return {
     data, error, refresh,
-    addEvent: (value: CreateEvent) => data && run(() => familyApi.addEvent(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, events: [...current.events, { ...value, id: id(), family_id: current.family.id }] })),
-    addReminder: (value: CreateReminder) => data && run(() => familyApi.addReminder(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, reminders: [...current.reminders, { ...value, id: id(), family_id: current.family.id, completed: false }] })),
-    addTodo: (value: CreateTodo) => data && run(() => familyApi.addTodo(data.family.id, session?.user.id ?? '', value), (current) => ({ ...current, todos: [...current.todos, { ...value, id: id(), family_id: current.family.id, completed: false, completed_at: null }] })),
-    addMember: (value: CreateMember, file?: File) => data && run(async () => {
-      const avatarUrl = file ? await familyApi.uploadAvatar(data.family.id, file) : null;
-      await familyApi.addMember(data.family.id, { ...value, avatar_url: avatarUrl });
-    }, (current) => ({ ...current, members: [...current.members, { ...value, user_id: null, avatar_url: file ? URL.createObjectURL(file) : null, id: id(), family_id: current.family.id, active: true, level_20_pass_date: null }] })),
+    addEvent: (value: CreateEvent) => {
+      const rowId = id();
+      return data && run(
+        () => familyApi.addEvent(rowId, data.family.id, session?.user.id ?? '', value),
+        (current) => ({ ...current, events: [...current.events, { ...value, id: rowId, family_id: current.family.id }] }),
+      );
+    },
+    addReminder: (value: CreateReminder) => {
+      const rowId = id();
+      return data && run(
+        () => familyApi.addReminder(rowId, data.family.id, session?.user.id ?? '', value),
+        (current) => ({ ...current, reminders: [...current.reminders, { ...value, id: rowId, family_id: current.family.id, completed: false }] }),
+      );
+    },
+    addTodo: (value: CreateTodo) => {
+      const rowId = id();
+      return data && run(
+        () => familyApi.addTodo(rowId, data.family.id, session?.user.id ?? '', value),
+        (current) => ({ ...current, todos: [...current.todos, { ...value, id: rowId, family_id: current.family.id, completed: false, completed_at: null }] }),
+      );
+    },
+    addMember: (value: CreateMember, file?: File) => {
+      const rowId = id();
+      return data && run(async () => {
+        const avatarUrl = file ? await familyApi.uploadAvatar(data.family.id, file) : null;
+        await familyApi.addMember(rowId, data.family.id, { ...value, avatar_url: avatarUrl });
+      }, (current) => ({ ...current, members: [...current.members, { ...value, user_id: null, avatar_url: file ? URL.createObjectURL(file) : null, id: rowId, family_id: current.family.id, active: true, level_20_pass_date: null }] }));
+    },
     updateMemberAvatar: (memberId: string, file: File) => run(async () => {
       if (!data) return;
       const avatarPath = await familyApi.uploadAvatar(data.family.id, file);

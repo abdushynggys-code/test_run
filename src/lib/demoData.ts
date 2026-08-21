@@ -7,6 +7,7 @@ const at = (day: number, time: string) => `${toDateKey(addDays(now, day))}T${tim
 
 export const demoData: DashboardData = {
   family: { id: 'demo-family', name: 'The Parker Family', owner_id: 'demo-parent', join_code: 'DEMOFAMILY' },
+  accountRole: 'owner',
   members: [
     { id: 'mom', family_id: 'demo-family', user_id: 'demo-parent', name: 'Mom', avatar_url: null, color: '#ef6f91', emoji: 'M', member_type: 'adult', active: true, level_20_pass_date: null },
     { id: 'dad', family_id: 'demo-family', user_id: null, name: 'Dad', avatar_url: null, color: '#4d8ef7', emoji: 'D', member_type: 'adult', active: true, level_20_pass_date: null },

@@ -1,6 +1,7 @@
 export type CalendarView = 'month' | 'week' | 'day';
 export type ThemeMode = 'light' | 'dark' | 'auto';
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
+export type FamilyRole = 'owner' | 'parent';
 
 export interface ThemePalette {
   primary: string;
@@ -96,6 +97,7 @@ export interface FamilySettings {
 
 export interface DashboardData {
   family: Family;
+  accountRole: FamilyRole;
   members: FamilyMember[];
   events: CalendarEvent[];
   reminders: Reminder[];

@@ -17,8 +17,8 @@ export function useDashboardSection(demoMode: boolean, onHome: () => void) {
   const changeSection = useCallback((next: DashboardSection) => {
     setSection(next);
     if (next === 'home') onHome();
-    if (new URLSearchParams(search).get('section') !== next) navigate(`${demoMode ? '/demo' : '/dashboard'}?section=${next}`);
-  }, [demoMode, navigate, onHome, search]);
+    if (new URLSearchParams(window.location.search).get('section') !== next) navigate(`${demoMode ? '/demo' : '/dashboard'}?section=${next}`);
+  }, [demoMode, navigate, onHome]);
 
   return { section, changeSection };
 }

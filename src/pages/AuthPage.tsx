@@ -3,6 +3,7 @@ import { Redirect, useLocation } from 'wouter';
 import { supabase } from '../lib/supabase';
 import { useSession } from '../hooks/useSession';
 import { GoogleAuthButton } from '../components/auth/GoogleAuthButton';
+import { invitePath, normalizeInviteCode, rememberPendingInvite } from '../lib/invite';
 
 type Mode = 'signin' | 'signup' | 'forgot';
 
@@ -10,6 +11,9 @@ export function AuthPage() {
   const { session } = useSession();
   const [, navigate] = useLocation();
   const initialMode = new URLSearchParams(window.location.search).get('mode') === 'signup' ? 'signup' : 'signin';
+  const inviteCode = normalizeInviteCode(new URLSearchParams(window.location.search).get('invite'));
+  const destination = inviteCode ? invitePath(inviteCode) : '/dashboard';
+  const redirectTo = new URL(destination, window.location.origin).toString();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,8 +26,9 @@ export function AuthPage() {
     const timer = window.setInterval(() => setCooldown((seconds) => Math.max(0, seconds - 1)), 1_000);
     return () => window.clearInterval(timer);
   }, [cooldown > 0]);
+  useEffect(() => { if (inviteCode) rememberPendingInvite(inviteCode); }, [inviteCode]);
 
-  if (session) return <Redirect to="/dashboard" />;
+  if (session) return <Redirect to={destination} />;
 
   function changeMode(nextMode: Mode) {
     setMode(nextMode);
@@ -32,7 +37,6 @@ export function AuthPage() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setMessage('');
-    const redirectTo = `${window.location.origin}/dashboard`;
     const result = mode === 'signup'
       ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirectTo } })
       : mode === 'forgot'
@@ -58,7 +62,8 @@ export function AuthPage() {
       {mode !== 'forgot' && <div className={`auth-tabs mode-${mode}`} role="tablist"><button type="button" className={mode === 'signin' ? 'active' : ''} onClick={() => changeMode('signin')}>Sign in</button><button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => changeMode('signup')}>Create account</button></div>}
       <div className={`auth-mode-content slide-${mode}`} key={mode}>
         <h2>{mode === 'signin' ? 'Sign in to your family' : mode === 'signup' ? 'Create your family' : 'Reset your password'}</h2>
-        {mode !== 'forgot' && <><GoogleAuthButton onError={setMessage} /><div className="auth-divider"><span>or continue with email</span></div></>}
+        {inviteCode && <p className="invite-auth-note">You are joining a shared family calendar. Sign in with the account you want to keep using.</p>}
+        {mode !== 'forgot' && <><GoogleAuthButton onError={setMessage} redirectTo={redirectTo} /><div className="auth-divider"><span>or continue with email</span></div></>}
         <form onSubmit={submit} className="form-stack">
           <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="parent@example.com" required /></label>
           {mode !== 'forgot' && <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={6} placeholder="At least 6 characters" required /></label>}

@@ -10,6 +10,7 @@ const steps: Array<{ art: TourArt; icon: string; label: string; title: string; t
   { art: 'home', icon: '⌂', label: 'YOUR DAY', title: 'Start on Home', text: 'Weather, upcoming dates, tasks, and today’s leaderboard stay together here.', selector: '[data-tour="home-overview"]', section: 'home' },
   { art: 'calendar', icon: '▦', label: 'PLAN AHEAD', title: 'Choose your calendar view', text: 'Switch between Month, Week, and Day anytime—even on your phone.', selector: '[data-tour="calendar-views"]', section: 'calendar' },
   { art: 'tasks', icon: '★', label: 'EARN REWARDS', title: 'Finish tasks, collect stars', text: 'Every finished task adds stars. Today’s winning child wears the crown.', selector: '[data-tour="task-rewards"]', section: 'tasks' },
+  { art: 'home', icon: '＋', label: 'PLAN TOGETHER', title: 'Invite another parent', text: 'Tap Invite parent and send the link. Each adult uses their own account, but everyone plans in this same calendar.', selector: '[data-tour="family-invite"]', section: 'home' },
   { art: 'sidekick', icon: '✦', label: 'YOUR AI HELPER', title: 'Ask Sidekick', text: 'Talk, type, or add a photo. Sidekick explains it or prepares a plan for you to approve.', selector: '[data-tour="sidekick"]', section: 'home' },
 ];
 
@@ -28,16 +29,21 @@ export function OnboardingTour({ onFinish, onNavigate }: Props) {
 
   useEffect(() => {
     onNavigate(item.section); setLayout(null);
+    let frame = 0;
     const timer = window.setTimeout(() => {
       const target = document.querySelector<HTMLElement>(item.selector);
       if (target) {
+        observer.observe(target);
         const rect = target.getBoundingClientRect();
-        if (rect.top < 8 || rect.bottom > window.innerHeight - 78) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        if (rect.top < 8 || rect.bottom > window.innerHeight - 78) target.scrollIntoView({ block: 'center', behavior: 'auto' });
       }
-      measure(); window.requestAnimationFrame(() => { measure(); window.requestAnimationFrame(measure); });
+      if (cardRef.current) observer.observe(cardRef.current);
+      frame = window.requestAnimationFrame(measure);
     }, 90);
-    window.addEventListener('resize', measure); window.addEventListener('scroll', measure, true);
-    return () => { window.clearTimeout(timer); window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true); };
+    const observer = new ResizeObserver(measure);
+    if (cardRef.current) observer.observe(cardRef.current);
+    window.addEventListener('resize', measure); window.addEventListener('scroll', measure, { capture: true, passive: true });
+    return () => { window.clearTimeout(timer); window.cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true); };
   }, [item.section, item.selector, measure, onNavigate]);
 
   const finish = () => { onNavigate('home'); onFinish(); };
@@ -48,7 +54,6 @@ export function OnboardingTour({ onFinish, onNavigate }: Props) {
       <svg className={`tour-arrow tour-arrow-${layout.side}`} viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`} aria-hidden="true">
         <defs><marker id="tour-arrow-head" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" /></marker></defs>
         <path className="tour-arrow-line" d={layout.arrowPath} markerEnd="url(#tour-arrow-head)" />
-        <circle r="4"><animateMotion dur="1.7s" repeatCount="indefinite" path={layout.arrowPath} /></circle>
       </svg></>}
     <section className={`tour-card ${layout ? 'placed' : ''}`} style={cardStyle} ref={cardRef} key={step}>
       <div className="tour-sparkles" aria-hidden="true"><i /><i /><i /></div>
